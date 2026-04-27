@@ -37,3 +37,8 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Local project guidance
+AGENTS.md
+docs/STYLE_DIRECTION.md
+docs/HOMEPAGE_PLAN.md

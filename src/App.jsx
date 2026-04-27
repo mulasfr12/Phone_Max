@@ -1,18 +1,25 @@
+import BrandRow from './sections/BrandRow.jsx';
+import CategoryGrid from './sections/CategoryGrid.jsx';
+import FeaturedProducts from './sections/FeaturedProducts.jsx';
+import Footer from './sections/Footer.jsx';
+import HeroSection from './sections/HeroSection.jsx';
+import Navbar from './sections/Navbar.jsx';
+import PromoBanner from './sections/PromoBanner.jsx';
+import TrustStrip from './sections/TrustStrip.jsx';
+
 export default function App() {
   return (
-    <main className="min-h-screen bg-zinc-950 text-zinc-50">
-      <section className="mx-auto flex min-h-screen max-w-6xl flex-col justify-center px-6 py-20">
-        <p className="mb-4 text-sm font-medium uppercase tracking-[0.28em] text-zinc-400">
-          Luxora
-        </p>
-        <h1 className="max-w-3xl text-5xl font-semibold leading-tight text-white sm:text-7xl">
-          Premium phones and accessories, curated with restraint.
-        </h1>
-        <p className="mt-6 max-w-xl text-lg leading-8 text-zinc-300">
-          Vite, React, and Tailwind are ready. The cinematic storefront comes
-          next.
-        </p>
-      </section>
-    </main>
+    <>
+      <Navbar />
+      <main>
+        <HeroSection />
+        <CategoryGrid />
+        <FeaturedProducts />
+        <PromoBanner />
+        <TrustStrip />
+        <BrandRow />
+      </main>
+      <Footer />
+    </>
   );
 }
