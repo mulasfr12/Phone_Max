@@ -2,7 +2,7 @@ export default function TrustItem({ item }) {
   return (
     <div className="flex gap-3">
       <div
-        className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-300 text-xs font-semibold text-zinc-950"
+        className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-300 bg-zinc-50 text-xs font-semibold text-zinc-950"
         aria-hidden="true"
       >
         {item.label.slice(0, 1)}

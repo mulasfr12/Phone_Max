@@ -7,7 +7,7 @@ export default function FeaturedProducts() {
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase text-zinc-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
               Featured
             </p>
             <h2 className="mt-2 text-3xl font-semibold text-zinc-950 sm:text-4xl">
@@ -16,7 +16,7 @@ export default function FeaturedProducts() {
           </div>
           <a
             href="#featured"
-            className="text-sm font-semibold text-zinc-950 underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-4"
+            className="inline-flex rounded-full border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-950 transition hover:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-4"
           >
             View all products
           </a>

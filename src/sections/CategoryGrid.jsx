@@ -3,11 +3,14 @@ import { categories } from '../data/homeData.js';
 
 export default function CategoryGrid() {
   return (
-    <section id="categories" className="bg-zinc-50 px-5 py-14 sm:px-8 sm:py-18">
+    <section
+      id="categories"
+      className="bg-gradient-to-b from-zinc-50 to-white px-5 py-14 sm:px-8 sm:py-16"
+    >
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase text-zinc-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
               Quick access
             </p>
             <h2 className="mt-2 text-3xl font-semibold text-zinc-950 sm:text-4xl">
