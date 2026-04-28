@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 
 import ProductCard from '../components/ProductCard.jsx';
+import { useCart } from '../context/CartContext.jsx';
 import { products } from '../data/products.js';
 
 function DetailProductVisual({ product }) {
@@ -98,6 +99,7 @@ function DetailProductVisual({ product }) {
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
+  const { addToCart } = useCart();
   const product = products.find((item) => item.id === id);
 
   if (!product) {
@@ -179,10 +181,11 @@ export default function ProductDetailsPage() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
-              disabled
-              className="cursor-not-allowed rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white opacity-80"
+              disabled={!product.inStock}
+              onClick={() => addToCart(product)}
+              className="rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
             >
-              Add to Bag coming later
+              {product.inStock ? 'Add to Bag' : 'Currently unavailable'}
             </button>
             <Link
               to="/products"

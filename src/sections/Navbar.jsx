@@ -1,7 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
 
+import { useCart } from '../context/CartContext.jsx';
+
 export default function Navbar() {
   const { pathname } = useLocation();
+  const { itemCount } = useCart();
   const isHome = pathname === '/';
 
   return (
@@ -44,9 +47,14 @@ export default function Navbar() {
           </button>
           <Link
             to="/cart"
-            className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-zinc-950 shadow-lg shadow-black/25 transition hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white/80 sm:px-4 sm:text-sm"
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-2 text-xs font-semibold text-zinc-950 shadow-lg shadow-black/25 transition hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white/80 sm:px-4 sm:text-sm"
           >
             Bag
+            {itemCount > 0 && (
+              <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-zinc-950 px-1 text-[0.68rem] leading-none text-white">
+                {itemCount}
+              </span>
+            )}
           </Link>
         </div>
       </nav>

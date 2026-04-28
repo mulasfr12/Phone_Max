@@ -1,6 +1,8 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
+import { useCart } from '../context/CartContext.jsx';
+
 const MotionLink = motion.create(Link);
 
 function ProductVisual({ id }) {
@@ -74,6 +76,7 @@ function ProductVisual({ id }) {
 
 export default function ProductCard({ product }) {
   const reduceMotion = useReducedMotion();
+  const { addToCart } = useCart();
 
   return (
     <motion.article
@@ -107,14 +110,26 @@ export default function ProductCard({ product }) {
           <p className="text-base font-semibold text-zinc-950">
             {product.price}
           </p>
-          <MotionLink
-            to={`/products/${product.id}`}
-            className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
-            whileTap={reduceMotion ? undefined : { scale: 0.94 }}
-            transition={{ duration: 0.16 }}
-          >
-            View
-          </MotionLink>
+          <div className="flex items-center gap-2">
+            <MotionLink
+              to={`/products/${product.id}`}
+              className="rounded-full border border-zinc-200 px-4 py-2 text-sm font-semibold text-zinc-950 transition duration-200 hover:border-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+              whileTap={reduceMotion ? undefined : { scale: 0.94 }}
+              transition={{ duration: 0.16 }}
+            >
+              View
+            </MotionLink>
+            <motion.button
+              type="button"
+              disabled={!product.inStock}
+              onClick={() => addToCart(product)}
+              className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
+              whileTap={reduceMotion || !product.inStock ? undefined : { scale: 0.94 }}
+              transition={{ duration: 0.16 }}
+            >
+              Add
+            </motion.button>
+          </div>
         </div>
       </div>
     </motion.article>
