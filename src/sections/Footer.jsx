@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 const footerGroups = [
   {
     title: 'Shop',
@@ -30,7 +32,7 @@ export default function Footer() {
           </p>
         </div>
 
-        <div className="grid gap-8 sm:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {footerGroups.map((group) => (
             <div key={group.title}>
               <h2 className="text-sm font-semibold text-white">{group.title}</h2>
@@ -48,6 +50,19 @@ export default function Footer() {
               </ul>
             </div>
           ))}
+          <div>
+            <h2 className="text-sm font-semibold text-white">Preview</h2>
+            <ul className="mt-4 space-y-3">
+              <li>
+                <Link
+                  to="/admin"
+                  className="text-sm text-zinc-500 transition hover:text-white"
+                >
+                  Admin mockup
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 

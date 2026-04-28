@@ -21,12 +21,27 @@ Luxora is a premium mobile-first storefront for phones and accessories. The expe
 - Add-to-bag toast feedback
 - Frontend-only checkout request placeholder
 - Support page placeholder
+- Frontend-only admin dashboard mockup for catalog, categories, and order requests
+- Route-level lazy loading for page bundles
 
 ## Frontend-Only Status
 
 Luxora does not have a backend yet. There are no API calls, authentication, payment processing, checkout processing, inventory services, or database connections.
 
-The cart is stored locally in the browser. The checkout page creates a local request preview only and does not submit data to a server.
+The cart is stored locally in the browser. The checkout page creates a local request preview only and does not submit data to a server. Admin pages use mock/local data and do not persist product or order changes.
+
+## Routes
+
+- `/` storefront homepage
+- `/products` product listing
+- `/products/:id` product detail
+- `/cart` local cart
+- `/checkout` local checkout request preview
+- `/support` support placeholder
+- `/admin` admin overview mockup
+- `/admin/products` admin product list mockup
+- `/admin/orders` admin order request mockup
+- `/admin/categories` admin category mockup
 
 ## Getting Started
 
@@ -80,3 +95,5 @@ Luxora should feel like a luxury gadget boutique:
 - Strong first impression followed by an easy shopping flow
 
 Animation should support the shopping experience. GSAP belongs only in the hero, Swiper belongs only in featured products, and Motion should remain subtle.
+
+Page routes are lazy-loaded with `React.lazy` and `Suspense` so heavier storefront/admin surfaces are loaded only when visited.
