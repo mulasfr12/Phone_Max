@@ -1,25 +1,27 @@
-import BrandRow from './sections/BrandRow.jsx';
-import CategoryGrid from './sections/CategoryGrid.jsx';
-import FeaturedProducts from './sections/FeaturedProducts.jsx';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+
 import Footer from './sections/Footer.jsx';
-import HeroSection from './sections/HeroSection.jsx';
 import Navbar from './sections/Navbar.jsx';
-import PromoBanner from './sections/PromoBanner.jsx';
-import TrustStrip from './sections/TrustStrip.jsx';
+import CartPage from './pages/CartPage.jsx';
+import HomePage from './pages/HomePage.jsx';
+import NotFoundPage from './pages/NotFoundPage.jsx';
+import ProductDetailsPage from './pages/ProductDetailsPage.jsx';
+import ProductsPage from './pages/ProductsPage.jsx';
+import SupportPage from './pages/SupportPage.jsx';
 
 export default function App() {
   return (
-    <>
+    <BrowserRouter>
       <Navbar />
-      <main>
-        <HeroSection />
-        <CategoryGrid />
-        <FeaturedProducts />
-        <PromoBanner />
-        <TrustStrip />
-        <BrandRow />
-      </main>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/products/:id" element={<ProductDetailsPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/support" element={<SupportPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
       <Footer />
-    </>
+    </BrowserRouter>
   );
 }

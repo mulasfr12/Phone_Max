@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 export default function HeroSection() {
   const heroRef = useRef(null);
+  const pinRef = useRef(null);
   const copyRef = useRef(null);
   const visualRef = useRef(null);
   const mainPhoneRef = useRef(null);
@@ -12,7 +13,7 @@ export default function HeroSection() {
   const leftSpecRef = useRef(null);
   const rightSpecRef = useRef(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const prefersReducedMotion = window.matchMedia(
       '(prefers-reduced-motion: reduce)',
     ).matches;
@@ -34,7 +35,7 @@ export default function HeroSection() {
             start: 'top top',
             end: '+=70%',
             scrub: 0.8,
-            pin: true,
+            pin: pinRef.current,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
@@ -99,6 +100,7 @@ export default function HeroSection() {
     return () => {
       media?.revert();
       context.revert();
+      ScrollTrigger.refresh();
     };
   }, []);
 
@@ -112,7 +114,10 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-[linear-gradient(110deg,rgba(0,0,0,0.16)_0%,transparent_42%,rgba(255,255,255,0.03)_52%,transparent_64%)]" />
       <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-zinc-50 via-zinc-950/55 to-transparent" />
 
-      <div className="relative mx-auto grid min-h-[100svh] max-w-7xl content-center gap-6 px-5 pb-14 pt-24 sm:min-h-[94vh] sm:gap-10 sm:px-8 sm:pb-24 sm:pt-28 lg:grid-cols-[0.92fr_1.08fr] lg:gap-8 lg:pt-24">
+      <div
+        ref={pinRef}
+        className="relative mx-auto grid min-h-[100svh] max-w-7xl content-center gap-6 px-5 pb-14 pt-24 sm:min-h-[94vh] sm:gap-10 sm:px-8 sm:pb-24 sm:pt-28 lg:grid-cols-[0.92fr_1.08fr] lg:gap-8 lg:pt-24"
+      >
         <div ref={copyRef} className="max-w-2xl will-change-transform">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-zinc-400 sm:text-xs sm:tracking-[0.34em]">
             Curated mobile luxury

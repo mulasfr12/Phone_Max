@@ -1,4 +1,7 @@
 import { motion, useReducedMotion } from 'motion/react';
+import { Link } from 'react-router-dom';
+
+const MotionLink = motion.create(Link);
 
 function ProductVisual({ id }) {
   if (id === 'nova-fold') {
@@ -82,14 +85,14 @@ export default function ProductCard({ product }) {
           <p className="text-base font-semibold text-zinc-950">
             {product.price}
           </p>
-          <motion.button
-            type="button"
+          <MotionLink
+            to={`/products/${product.id}`}
             className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
             whileTap={reduceMotion ? undefined : { scale: 0.94 }}
             transition={{ duration: 0.16 }}
           >
             View
-          </motion.button>
+          </MotionLink>
         </div>
       </div>
     </motion.article>
