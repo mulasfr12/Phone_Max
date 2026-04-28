@@ -1,3 +1,5 @@
+import { motion, useReducedMotion } from 'motion/react';
+
 function CategoryVisual({ id }) {
   if (id === 'phones') {
     return (
@@ -67,20 +69,33 @@ function CategoryVisual({ id }) {
 }
 
 export default function CategoryCard({ category }) {
+  const reduceMotion = useReducedMotion();
+  const revealProps = reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 18 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, amount: 0.35 },
+        transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+      };
+
   return (
-    <a
+    <motion.a
       href={`#${category.id}`}
-      className="group flex min-h-56 flex-col justify-between overflow-hidden rounded-lg border border-zinc-200/80 bg-white p-3 shadow-sm shadow-zinc-950/5 transition duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-2xl hover:shadow-zinc-950/10 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+      className="group flex min-h-60 flex-col justify-between overflow-hidden rounded-lg border border-zinc-200/80 bg-white p-3 shadow-sm shadow-zinc-950/5 transition duration-300 hover:border-zinc-300 hover:shadow-2xl hover:shadow-zinc-950/10 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 sm:min-h-56"
+      whileHover={reduceMotion ? undefined : { y: -4 }}
+      whileTap={reduceMotion ? undefined : { scale: 0.99 }}
+      {...revealProps}
     >
       <div
-        className={`relative h-32 overflow-hidden rounded-md bg-gradient-to-br ${category.tone}`}
+        className={`relative h-36 overflow-hidden rounded-md bg-gradient-to-br ${category.tone} sm:h-32`}
         aria-hidden="true"
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(255,255,255,0.28),transparent_22%)]" />
         <CategoryVisual id={category.id} />
         <div className="absolute bottom-3 left-1/2 h-9 w-32 -translate-x-1/2 rounded-full bg-white/20 blur-xl" />
       </div>
-      <div className="px-2 pb-2 pt-4">
+      <div className="px-2 pb-2 pt-3 sm:pt-4">
         <h3 className="text-lg font-semibold text-zinc-950">
           {category.name}
         </h3>
@@ -88,6 +103,6 @@ export default function CategoryCard({ category }) {
           {category.description}
         </p>
       </div>
-    </a>
+    </motion.a>
   );
 }
