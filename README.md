@@ -1,14 +1,32 @@
 # Luxora
 
-Luxora is a premium mobile-first e-commerce web app for phones and accessories. The storefront direction is cinematic at the top, restrained in its interface, and practical once customers start browsing.
+Luxora is a premium mobile-first storefront for phones and accessories. The experience is cinematic at the top, restrained through the interface, and practical once customers start browsing.
 
-## Stack
+## Tech Stack
 
 - React + Vite
 - JavaScript
 - Tailwind CSS
-- No backend yet
-- No API calls yet
+- React Router
+- GSAP only for the homepage hero
+- Swiper only for featured products
+- Motion for restrained UI polish
+
+## Current Features
+
+- Premium homepage with cinematic hero and practical shopping sections
+- Product listing page using local mock data
+- Product detail pages using local mock data
+- Frontend-only cart with quantity controls and localStorage persistence
+- Add-to-bag toast feedback
+- Frontend-only checkout request placeholder
+- Support page placeholder
+
+## Frontend-Only Status
+
+Luxora does not have a backend yet. There are no API calls, authentication, payment processing, checkout processing, inventory services, or database connections.
+
+The cart is stored locally in the browser. The checkout page creates a local request preview only and does not submit data to a server.
 
 ## Getting Started
 
@@ -42,7 +60,15 @@ On Windows PowerShell, if `npm` is blocked by script execution policy, use `npm.
 npm.cmd run dev
 ```
 
-## Product Direction
+## Project Guidance
+
+Read these before making UI or architecture changes:
+
+- [AGENTS.md](AGENTS.md)
+- [docs/STYLE_DIRECTION.md](docs/STYLE_DIRECTION.md)
+- [docs/HOMEPAGE_PLAN.md](docs/HOMEPAGE_PLAN.md)
+
+## Design Direction
 
 Luxora should feel like a luxury gadget boutique:
 
@@ -53,26 +79,4 @@ Luxora should feel like a luxury gadget boutique:
 - Premium, but not cluttered
 - Strong first impression followed by an easy shopping flow
 
-The homepage should not become a motion demo. Animation should support the shopping experience, not replace it.
-
-## Project Guidance
-
-Read these before building UI:
-
-- [AGENTS.md](AGENTS.md) - repo working rules for coding, styling, performance, and verification.
-- [docs/STYLE_DIRECTION.md](docs/STYLE_DIRECTION.md) - visual, brand, spacing, animation, and e-commerce usability direction.
-- [docs/HOMEPAGE_PLAN.md](docs/HOMEPAGE_PLAN.md) - planned homepage sections and implementation notes.
-
-## Future Animation Plan
-
-These dependencies are intentionally not installed yet:
-
-- GSAP for the hero and serious scroll storytelling.
-- Motion for smaller UI transitions.
-- Swiper for product carousels.
-
-Add them only when the relevant feature is requested.
-
-## Current Status
-
-The repo is scaffolded with Vite, React, and Tailwind. The initial app shell is intentionally minimal so the Luxora storefront can be built from the documented direction.
+Animation should support the shopping experience. GSAP belongs only in the hero, Swiper belongs only in featured products, and Motion should remain subtle.

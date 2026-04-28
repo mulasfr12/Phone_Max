@@ -15,14 +15,39 @@ const inputClassName =
 export default function CheckoutPage() {
   const { items, itemCount, subtotal } = useCart();
   const [requestReference, setRequestReference] = useState(null);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    phone: '',
+    email: '',
+    preference: 'delivery',
+    notes: '',
+  });
 
   const referenceNumber = useMemo(
     () => `LX-${Math.floor(100000 + Math.random() * 900000)}`,
     [],
   );
 
+  const canSubmit =
+    formData.fullName.trim().length > 1 &&
+    formData.phone.trim().length > 5 &&
+    Boolean(formData.preference);
+
+  function handleChange(event) {
+    const { name, value } = event.target;
+    setFormData((currentData) => ({
+      ...currentData,
+      [name]: value,
+    }));
+    setRequestReference(null);
+  }
+
   function handleSubmit(event) {
     event.preventDefault();
+    if (!canSubmit) {
+      return;
+    }
+
     setRequestReference(referenceNumber);
   }
 
@@ -73,6 +98,9 @@ export default function CheckoutPage() {
             for the prototype and does not send data, process payment, or create
             an account.
           </p>
+          <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
+            Required: name, phone, delivery preference
+          </p>
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_24rem] lg:items-start">
@@ -98,37 +126,53 @@ export default function CheckoutPage() {
 
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="text-sm font-semibold text-zinc-800">
-                Full name
+                Full name <span className="text-zinc-500">(required)</span>
                 <input
                   required
+                  name="fullName"
                   type="text"
                   autoComplete="name"
-                  placeholder="Alex Morgan"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  placeholder="Name for this request"
                   className={inputClassName}
                 />
               </label>
               <label className="text-sm font-semibold text-zinc-800">
-                Phone number
+                Phone number <span className="text-zinc-500">(required)</span>
                 <input
                   required
+                  name="phone"
                   type="tel"
                   autoComplete="tel"
-                  placeholder="+1 555 0184"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Best number for order follow-up"
                   className={inputClassName}
                 />
               </label>
               <label className="text-sm font-semibold text-zinc-800">
                 Email optional
                 <input
+                  name="email"
                   type="email"
                   autoComplete="email"
-                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="For a copy of the request later"
                   className={inputClassName}
                 />
               </label>
               <label className="text-sm font-semibold text-zinc-800">
-                Delivery preference
-                <select required defaultValue="delivery" className={inputClassName}>
+                Delivery preference{' '}
+                <span className="text-zinc-500">(required)</span>
+                <select
+                  required
+                  name="preference"
+                  value={formData.preference}
+                  onChange={handleChange}
+                  className={inputClassName}
+                >
                   <option value="delivery">Delivery request</option>
                   <option value="pickup">Boutique pickup request</option>
                 </select>
@@ -138,8 +182,11 @@ export default function CheckoutPage() {
             <label className="mt-5 block text-sm font-semibold text-zinc-800">
               Notes
               <textarea
+                name="notes"
                 rows="5"
-                placeholder="Preferred timing, finish questions, or bundle notes."
+                value={formData.notes}
+                onChange={handleChange}
+                placeholder="Preferred timing, finish questions, or bundle notes"
                 className={`${inputClassName} resize-none py-3`}
               />
             </label>
@@ -152,7 +199,8 @@ export default function CheckoutPage() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 type="submit"
-                className="rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-4"
+                disabled={!canSubmit}
+                className="rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-4 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
               >
                 Submit local request
               </button>

@@ -2,10 +2,17 @@ import { Link, useLocation } from 'react-router-dom';
 
 import { useCart } from '../context/CartContext.jsx';
 
+const navLinks = [
+  { label: 'Shop', to: '/products', match: '/products' },
+  { label: 'Featured', to: '/#featured', match: '/' },
+  { label: 'Support', to: '/support', match: '/support' },
+];
+
 export default function Navbar() {
   const { pathname } = useLocation();
   const { itemCount } = useCart();
   const isHome = pathname === '/';
+  const visibleItemCount = itemCount > 99 ? '99+' : itemCount;
 
   return (
     <header
@@ -27,15 +34,25 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden items-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm font-medium text-zinc-300 shadow-2xl shadow-black/20 backdrop-blur-xl md:flex md:gap-6">
-          <Link className="transition hover:text-white" to="/products">
-            Shop
-          </Link>
-          <Link className="transition hover:text-white" to="/#featured">
-            Featured
-          </Link>
-          <Link className="transition hover:text-white" to="/support">
-            Support
-          </Link>
+          {navLinks.map((link) => {
+            const isActive =
+              link.match === '/'
+                ? pathname === '/'
+                : pathname.startsWith(link.match);
+
+            return (
+              <Link
+                key={link.label}
+                className={`transition hover:text-white ${
+                  isActive ? 'text-white' : ''
+                }`}
+                to={link.to}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-black/20 p-1 shadow-lg shadow-black/20 backdrop-blur-xl sm:bg-transparent sm:p-0 sm:shadow-none">
@@ -52,7 +69,7 @@ export default function Navbar() {
             Bag
             {itemCount > 0 && (
               <span className="grid min-h-5 min-w-5 place-items-center rounded-full bg-zinc-950 px-1 text-[0.68rem] leading-none text-white">
-                {itemCount}
+                {visibleItemCount}
               </span>
             )}
           </Link>

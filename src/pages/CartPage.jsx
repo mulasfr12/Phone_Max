@@ -123,18 +123,26 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => decreaseQuantity(item.id)}
-                        className="grid h-9 w-9 place-items-center rounded-full text-lg font-semibold text-zinc-700 transition hover:bg-white hover:text-zinc-950"
-                        aria-label={`Decrease ${item.name} quantity`}
+                        className="grid h-10 w-10 place-items-center rounded-full text-lg font-semibold text-zinc-700 transition hover:bg-white hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+                        aria-label={
+                          item.quantity === 1
+                            ? `Remove ${item.name} from bag`
+                            : `Decrease ${item.name} quantity`
+                        }
                       >
                         -
                       </button>
-                      <span className="grid min-w-10 place-items-center text-sm font-semibold text-zinc-950">
+                      <span
+                        className="grid min-w-10 place-items-center text-sm font-semibold text-zinc-950"
+                        aria-live="polite"
+                        aria-label={`${item.name} quantity ${item.quantity}`}
+                      >
                         {item.quantity}
                       </span>
                       <button
                         type="button"
                         onClick={() => increaseQuantity(item.id)}
-                        className="grid h-9 w-9 place-items-center rounded-full text-lg font-semibold text-zinc-700 transition hover:bg-white hover:text-zinc-950"
+                        className="grid h-10 w-10 place-items-center rounded-full text-lg font-semibold text-zinc-700 transition hover:bg-white hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
                         aria-label={`Increase ${item.name} quantity`}
                       >
                         +
@@ -161,6 +169,9 @@ export default function CartPage() {
                 <span>Delivery</span>
                 <span>Calculated later</span>
               </div>
+              <p className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs leading-5 text-zinc-500">
+                Checkout is a local request preview. No payment will be taken.
+              </p>
             </div>
             <div className="mt-5 flex items-center justify-between gap-4">
               <span className="text-base font-semibold text-zinc-950">
@@ -174,7 +185,7 @@ export default function CartPage() {
               to="/checkout"
               className="mt-6 inline-flex w-full justify-center rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-4"
             >
-              Continue to request
+              Request checkout preview
             </Link>
             <Link
               to="/products"

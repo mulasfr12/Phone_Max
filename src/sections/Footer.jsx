@@ -52,8 +52,8 @@ export default function Footer() {
       </div>
 
       <div className="mx-auto mt-10 flex max-w-7xl flex-col gap-3 border-t border-white/10 pt-6 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
-        <p>© 2026 Luxora. Static storefront preview.</p>
-        <p>No checkout, accounts, or API calls yet.</p>
+        <p>Copyright 2026 Luxora. Frontend storefront preview.</p>
+        <p>Local cart and request flow only. No payments or API calls yet.</p>
       </div>
     </footer>
   );
