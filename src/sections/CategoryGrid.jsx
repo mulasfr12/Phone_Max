@@ -39,8 +39,12 @@ export default function CategoryGrid() {
         </motion.div>
 
         <div className="mt-6 grid gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
-          {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} />
+          {categories.map((category, index) => (
+            <CategoryCard
+              key={category.id}
+              category={category}
+              index={index}
+            />
           ))}
         </div>
       </div>

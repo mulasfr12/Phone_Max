@@ -5,10 +5,10 @@ export default function PromoBanner() {
   const revealProps = reduceMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 22 },
-        whileInView: { opacity: 1, y: 0 },
+        initial: { opacity: 0, y: 34, scale: 0.985 },
+        whileInView: { opacity: 1, y: 0, scale: 1 },
         viewport: { once: true, amount: 0.28 },
-        transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+        transition: { duration: 0.62, ease: [0.22, 1, 0.36, 1] },
       };
 
   return (
@@ -28,6 +28,9 @@ export default function PromoBanner() {
             Pair a flagship phone with a protective case, compact charger, and
             studio-grade audio in a calm, curated bundle.
           </p>
+          <p className="mt-5 inline-flex rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-zinc-400">
+            Device + audio + power
+          </p>
           <a
             href="#featured"
             className="mt-6 inline-flex min-h-11 items-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-white/80 sm:mt-7"
@@ -38,7 +41,8 @@ export default function PromoBanner() {
 
         <motion.div
           className="relative min-h-72 overflow-hidden bg-[radial-gradient(circle_at_66%_26%,rgba(214,204,188,0.24),transparent_28%),linear-gradient(135deg,#151518,#303034_55%,#0f172a)] sm:min-h-80"
-          whileInView={reduceMotion ? undefined : { scale: 1.01 }}
+          initial={reduceMotion ? undefined : { x: 18, opacity: 0.92 }}
+          whileInView={reduceMotion ? undefined : { x: 0, scale: 1.015, opacity: 1 }}
           viewport={{ once: true, amount: 0.35 }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         >

@@ -30,3 +30,38 @@ body {
   background: #18181b;
   color: #ffffff;
 }
+
+@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
+  .luxora-mobile-device-float {
+    animation: luxora-device-breathe 4.8s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .luxora-scroll-cue {
+    animation: luxora-scroll-cue 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes luxora-device-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-4px) scale(1.006);
+  }
+}
+
+@keyframes luxora-scroll-cue {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: translateY(0);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(5px);
+  }
+}

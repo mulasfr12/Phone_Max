@@ -181,14 +181,20 @@ export default function HeroSection() {
           <div className="absolute left-1/2 top-[48%] h-[20rem] w-40 -translate-x-1/2 -translate-y-1/2 sm:h-[25rem] sm:w-60 lg:h-[34rem] lg:w-72">
             <div
               ref={mainPhoneRef}
-              className="relative h-full w-full rounded-[2.7rem] border border-white/35 bg-gradient-to-br from-stone-200/25 via-zinc-500/10 to-black/30 p-2 shadow-[0_44px_150px_rgba(0,0,0,0.82)] backdrop-blur-xl will-change-transform"
+              className="relative h-full w-full rounded-[2.7rem] border border-white/40 bg-gradient-to-br from-stone-200/30 via-zinc-500/10 to-black/35 p-2 shadow-[0_44px_150px_rgba(0,0,0,0.82)] backdrop-blur-xl will-change-transform"
             >
-              <div className="pointer-events-none absolute -inset-px rounded-[2.7rem] bg-[linear-gradient(135deg,rgba(255,255,255,0.48),transparent_28%,rgba(255,255,255,0.08)_58%,rgba(0,0,0,0.45))] opacity-70" />
-              <div className="relative h-full overflow-hidden rounded-[2.2rem] border border-white/10 bg-[radial-gradient(circle_at_50%_16%,rgba(255,255,255,0.25),transparent_18%),linear-gradient(155deg,#111214_0%,#252525_48%,#070707_100%)]">
+              <div className="pointer-events-none absolute -inset-px rounded-[2.7rem] bg-[linear-gradient(135deg,rgba(255,255,255,0.58),transparent_28%,rgba(255,255,255,0.09)_58%,rgba(0,0,0,0.5))] opacity-80" />
+              <div className="absolute -left-1 top-24 h-14 w-1 rounded-l-full bg-white/25" />
+              <div className="absolute -right-1 top-32 h-20 w-1 rounded-r-full bg-black/45" />
+              <div className="luxora-mobile-device-float relative h-full overflow-hidden rounded-[2.2rem] border border-white/12 bg-[radial-gradient(circle_at_50%_16%,rgba(255,255,255,0.25),transparent_18%),linear-gradient(155deg,#111214_0%,#252525_48%,#070707_100%)]">
                 <div className="absolute left-1/2 top-4 h-5 w-24 -translate-x-1/2 rounded-full border border-white/5 bg-black/70 shadow-inner" />
                 <div className="absolute -right-12 top-14 h-72 w-20 rotate-12 rounded-full bg-white/20 blur-2xl" />
+                <div className="absolute right-4 top-20 h-40 w-px rotate-12 bg-gradient-to-b from-transparent via-white/25 to-transparent" />
                 <div className="absolute inset-x-8 top-24 h-40 rounded-full bg-white/10 blur-3xl" />
-                <div className="absolute left-6 top-24 h-20 w-20 rounded-full border border-white/10 bg-white/[0.03]" />
+                <div className="absolute left-6 top-24 h-20 w-20 rounded-full border border-white/10 bg-white/[0.03]">
+                  <div className="absolute left-4 top-4 h-7 w-7 rounded-full border border-white/15 bg-black/20" />
+                  <div className="absolute bottom-4 right-4 h-5 w-5 rounded-full border border-white/10 bg-black/20" />
+                </div>
                 <div className="absolute bottom-5 left-4 right-4 rounded-2xl border border-white/10 bg-white/[0.06] p-3 backdrop-blur-xl sm:bottom-8 sm:left-5 sm:right-5 sm:p-4">
                   <p className="text-xs font-medium text-zinc-400">
                     Aura X1 Pro
@@ -216,7 +222,7 @@ export default function HeroSection() {
         </div>
         <a
           href="#categories"
-          className="mx-auto -mt-4 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-zinc-500 sm:hidden"
+          className="luxora-scroll-cue mx-auto -mt-4 inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-zinc-500 sm:hidden"
         >
           Shop
           <span className="h-6 w-px bg-gradient-to-b from-zinc-500 to-transparent" />

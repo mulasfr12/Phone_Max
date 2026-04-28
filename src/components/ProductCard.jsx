@@ -1,3 +1,5 @@
+import { motion, useReducedMotion } from 'motion/react';
+
 function ProductVisual({ id }) {
   if (id === 'nova-fold') {
     return (
@@ -46,12 +48,19 @@ function ProductVisual({ id }) {
 }
 
 export default function ProductCard({ product }) {
+  const reduceMotion = useReducedMotion();
+
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-sm shadow-zinc-950/5 transition duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-2xl hover:shadow-zinc-950/10">
+    <motion.article
+      className="group flex h-full flex-col overflow-hidden rounded-lg border border-zinc-200/80 bg-white shadow-sm shadow-zinc-950/5 transition duration-300 hover:-translate-y-1 hover:border-zinc-300 hover:shadow-2xl hover:shadow-zinc-950/10"
+      whileTap={reduceMotion ? undefined : { scale: 0.985 }}
+      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+    >
       <div
         className={`relative aspect-[4/3] overflow-hidden bg-gradient-to-br ${product.tone}`}
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_16%,rgba(255,255,255,0.24),transparent_22%)]" />
+        <div className="absolute inset-x-6 top-6 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
         <ProductVisual id={product.id} />
         <div className="absolute bottom-5 left-1/2 h-12 w-40 -translate-x-1/2 rounded-full bg-white/20 blur-xl" />
         <div className="absolute right-5 top-5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur-md">
@@ -69,18 +78,20 @@ export default function ProductCard({ product }) {
         <p className="mt-2 flex-1 text-sm leading-6 text-zinc-600">
           {product.spec}
         </p>
-        <div className="mt-5 flex items-center justify-between gap-3">
+        <div className="mt-5 flex items-center justify-between gap-3 border-t border-zinc-100 pt-4">
           <p className="text-base font-semibold text-zinc-950">
             {product.price}
           </p>
-          <button
+          <motion.button
             type="button"
             className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+            whileTap={reduceMotion ? undefined : { scale: 0.94 }}
+            transition={{ duration: 0.16 }}
           >
             View
-          </button>
+          </motion.button>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }

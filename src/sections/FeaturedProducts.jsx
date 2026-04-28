@@ -36,6 +36,9 @@ export default function FeaturedProducts() {
             </button>
           </div>
         </div>
+        <p className="mt-4 text-sm font-medium text-zinc-500 sm:hidden">
+          Swipe to browse
+        </p>
 
         <Swiper
           className="featured-products-swiper -mx-5 mt-6 px-5 sm:mx-0 sm:mt-8 sm:px-0"
@@ -85,6 +88,8 @@ export default function FeaturedProducts() {
             '--swiper-pagination-color': '#09090b',
             '--swiper-pagination-bullet-inactive-color': '#d4d4d8',
             '--swiper-pagination-bullet-inactive-opacity': '1',
+            '--swiper-pagination-bullet-size': '7px',
+            '--swiper-pagination-bullet-horizontal-gap': '5px',
           }}
         />
       </div>
