@@ -1,3 +1,5 @@
+import { products } from './products.js';
+
 export const categories = [
   {
     id: 'phones',
@@ -37,40 +39,7 @@ export const categories = [
   },
 ];
 
-export const featuredProducts = [
-  {
-    id: 'aura-x1',
-    name: 'Aura X1 Pro',
-    spec: 'Titanium frame, 256GB, night lens system',
-    price: '$1,199',
-    finish: 'Graphite Titanium',
-    tone: 'from-zinc-950 via-zinc-800 to-slate-300',
-  },
-  {
-    id: 'nova-fold',
-    name: 'Nova Fold',
-    spec: '7.6-inch inner display, 512GB, hinge care',
-    price: '$1,649',
-    finish: 'Liquid Silver',
-    tone: 'from-neutral-950 via-slate-800 to-cyan-200',
-  },
-  {
-    id: 'arc-buds',
-    name: 'Arc Buds Studio',
-    spec: 'Adaptive audio, low-latency mode, wireless case',
-    price: '$249',
-    finish: 'Soft Pearl',
-    tone: 'from-stone-900 via-zinc-700 to-stone-200',
-  },
-  {
-    id: 'mag-dock',
-    name: 'Mag Dock Duo',
-    spec: '15W phone charging, watch stand, woven cable',
-    price: '$139',
-    finish: 'Midnight Steel',
-    tone: 'from-zinc-950 via-neutral-800 to-amber-200',
-  },
-];
+export const featuredProducts = products.slice(0, 4);
 
 export const trustItems = [
   {

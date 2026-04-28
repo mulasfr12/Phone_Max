@@ -40,6 +40,28 @@ function ProductVisual({ id }) {
     );
   }
 
+  if (id === 'veil-case') {
+    return (
+      <div className="absolute left-1/2 top-8 h-[78%] w-[46%] -translate-x-1/2 rounded-[2rem] border border-white/30 bg-white/10 p-1.5 shadow-[0_28px_80px_rgba(0,0,0,0.38)] backdrop-blur-md transition duration-300 group-hover:translate-y-1">
+        <div className="relative h-full rounded-[1.55rem] border border-white/20 bg-black/10">
+          <div className="absolute left-3 top-3 h-12 w-12 rounded-xl border border-white/25 bg-black/20" />
+          <div className="absolute inset-x-8 bottom-6 h-1 rounded-full bg-white/25" />
+        </div>
+      </div>
+    );
+  }
+
+  if (id === 'loop-band') {
+    return (
+      <>
+        <div className="absolute left-1/2 top-8 h-[78%] w-16 -translate-x-1/2 rounded-full border border-white/25 bg-white/10 shadow-[0_28px_80px_rgba(0,0,0,0.36)] backdrop-blur-md transition duration-300 group-hover:translate-y-1" />
+        <div className="absolute left-1/2 top-[34%] h-24 w-24 -translate-x-1/2 rounded-[1.7rem] border border-white/30 bg-white/10 p-1.5 shadow-[0_26px_70px_rgba(0,0,0,0.4)] backdrop-blur-md">
+          <div className="h-full rounded-[1.25rem] border border-white/10 bg-black/20" />
+        </div>
+      </>
+    );
+  }
+
   return (
     <div className="absolute left-1/2 top-8 h-[78%] w-[46%] -translate-x-1/2 rounded-[2rem] border border-white/30 bg-white/10 p-1.5 shadow-[0_28px_80px_rgba(0,0,0,0.38)] backdrop-blur-md transition duration-300 group-hover:translate-y-1">
       <div className="relative h-full overflow-hidden rounded-[1.55rem] border border-white/10 bg-black/20">
