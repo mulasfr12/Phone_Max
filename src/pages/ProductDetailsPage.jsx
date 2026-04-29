@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { products } from '../data/products.js';
+import { formatPrice } from '../utils/money.js';
 
 function DetailProductVisual({ product }) {
   const visualBase =
@@ -161,7 +162,7 @@ export default function ProductDetailsPage() {
             {product.spec}
           </p>
           <p className="mt-6 text-2xl font-semibold text-zinc-950">
-            {product.price}
+            {formatPrice(product.priceCents, product.currency)}
           </p>
 
           <div className="mt-8 border-t border-zinc-100 pt-6">
@@ -183,6 +184,11 @@ export default function ProductDetailsPage() {
               type="button"
               disabled={!product.inStock}
               onClick={() => addToCart(product)}
+              aria-label={
+                product.inStock
+                  ? `Add ${product.name} to bag`
+                  : `${product.name} is currently unavailable`
+              }
               className="rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
             >
               {product.inStock ? 'Add to Bag' : 'Currently unavailable'}

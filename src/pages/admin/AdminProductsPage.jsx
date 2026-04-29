@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
 import { products } from '../../data/products.js';
+import { formatPrice } from '../../utils/money.js';
 
 const productColumns = [
   {
@@ -16,7 +17,11 @@ const productColumns = [
     ),
   },
   { key: 'category', label: 'Category' },
-  { key: 'price', label: 'Price' },
+  {
+    key: 'priceCents',
+    label: 'Price',
+    render: (product) => formatPrice(product.priceCents, product.currency),
+  },
   {
     key: 'inStock',
     label: 'Stock',
@@ -46,6 +51,7 @@ export default function AdminProductsPage() {
         changes.
       </div>
       <AdminTable
+        label="Admin product catalog"
         columns={productColumns}
         rows={products}
         renderActions={(product) => (

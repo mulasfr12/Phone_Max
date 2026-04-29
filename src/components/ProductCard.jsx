@@ -2,6 +2,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
 
 import { useCart } from '../context/CartContext.jsx';
+import { formatPrice } from '../utils/money.js';
 
 const MotionLink = motion.create(Link);
 
@@ -108,7 +109,7 @@ export default function ProductCard({ product }) {
         </p>
         <div className="mt-5 flex items-center justify-between gap-3 border-t border-zinc-100 pt-4">
           <p className="text-base font-semibold text-zinc-950">
-            {product.price}
+            {formatPrice(product.priceCents, product.currency)}
           </p>
           <div className="flex items-center gap-2">
             <MotionLink
@@ -123,6 +124,7 @@ export default function ProductCard({ product }) {
               type="button"
               disabled={!product.inStock}
               onClick={() => addToCart(product)}
+              aria-label={`Add ${product.name} to bag`}
               className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
               whileTap={reduceMotion || !product.inStock ? undefined : { scale: 0.94 }}
               transition={{ duration: 0.16 }}

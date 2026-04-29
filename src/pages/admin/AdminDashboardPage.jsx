@@ -4,16 +4,17 @@ import AdminTable from '../../components/admin/AdminTable.jsx';
 import { mockInventoryNotes, mockOrderRequests } from '../../data/adminData.js';
 import { categories } from '../../data/homeData.js';
 import { products } from '../../data/products.js';
-
-function parseCurrency(value) {
-  return Number(String(value).replace(/[^0-9.]/g, '')) || 0;
-}
+import { formatPrice } from '../../utils/money.js';
 
 const orderColumns = [
   { key: 'id', label: 'Request' },
   { key: 'customerName', label: 'Customer' },
   { key: 'itemsCount', label: 'Items' },
-  { key: 'subtotal', label: 'Subtotal' },
+  {
+    key: 'subtotalCents',
+    label: 'Subtotal',
+    render: (row) => formatPrice(row.subtotalCents, row.currency),
+  },
   {
     key: 'status',
     label: 'Status',
@@ -30,7 +31,7 @@ export default function AdminDashboardPage() {
     (order) => order.status === 'Pending',
   );
   const revenueEstimate = mockOrderRequests.reduce(
-    (total, order) => total + parseCurrency(order.subtotal),
+    (total, order) => total + order.subtotalCents,
     0,
   );
 
@@ -58,7 +59,7 @@ export default function AdminDashboardPage() {
         />
         <AdminStatCard
           label="Revenue estimate"
-          value={`$${revenueEstimate.toLocaleString('en-US')}`}
+          value={formatPrice(revenueEstimate)}
           detail="Mock subtotal value only."
         />
       </div>
@@ -73,7 +74,11 @@ export default function AdminDashboardPage() {
               Mock data
             </p>
           </div>
-          <AdminTable columns={orderColumns} rows={mockOrderRequests.slice(0, 3)} />
+          <AdminTable
+            label="Recent mock order requests"
+            columns={orderColumns}
+            rows={mockOrderRequests.slice(0, 3)}
+          />
         </section>
 
         <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm shadow-zinc-950/5">

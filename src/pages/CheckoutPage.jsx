@@ -2,12 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useCart } from '../context/CartContext.jsx';
-
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-});
+import { formatPrice } from '../utils/money.js';
 
 const inputClassName =
   'mt-2 min-h-12 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-500 focus:bg-white';
@@ -220,25 +215,28 @@ export default function CheckoutPage() {
             <div className="mt-5 space-y-4">
               {items.map((item) => (
                 <div
-                  key={item.id}
+                  key={item.productId}
                   className="flex gap-4 border-b border-zinc-100 pb-4 last:border-b-0"
                 >
                   <div
-                    className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gradient-to-br ${item.tone}`}
+                    className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gradient-to-br ${item.productSnapshot.tone}`}
                   >
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_16%,rgba(255,255,255,0.22),transparent_26%)]" />
                     <div className="absolute left-1/2 top-3 h-10 w-5 -translate-x-1/2 rounded-md border border-white/30 bg-white/10" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-zinc-950">
-                      {item.name}
+                      {item.productSnapshot.name}
                     </p>
                     <p className="mt-1 text-xs text-zinc-500">
-                      {item.finish} x {item.quantity}
+                      {item.productSnapshot.finish} x {item.quantity}
                     </p>
                   </div>
                   <p className="text-sm font-semibold text-zinc-950">
-                    {item.price}
+                    {formatPrice(
+                      item.productSnapshot.priceCents,
+                      item.productSnapshot.currency,
+                    )}
                   </p>
                 </div>
               ))}
@@ -248,7 +246,7 @@ export default function CheckoutPage() {
               <div className="flex justify-between gap-4">
                 <span>{itemCount} item total</span>
                 <span className="font-semibold text-zinc-950">
-                  {currencyFormatter.format(subtotal)}
+                  {formatPrice(subtotal)}
                 </span>
               </div>
               <div className="flex justify-between gap-4">
@@ -261,7 +259,7 @@ export default function CheckoutPage() {
                 Preview total
               </span>
               <span className="text-2xl font-semibold text-zinc-950">
-                {currencyFormatter.format(subtotal)}
+                {formatPrice(subtotal)}
               </span>
             </div>
           </aside>

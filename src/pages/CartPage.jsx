@@ -1,12 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import { useCart } from '../context/CartContext.jsx';
-
-const currencyFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 0,
-});
+import { formatPrice } from '../utils/money.js';
 
 export default function CartPage() {
   const {
@@ -79,78 +74,13 @@ export default function CartPage() {
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_24rem] lg:items-start">
           <div className="space-y-4">
             {items.map((item) => (
-              <article
-                key={item.id}
-                className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-950/5 sm:grid-cols-[9rem_1fr] sm:p-5"
-              >
-                <Link
-                  to={`/products/${item.id}`}
-                  className={`relative aspect-[4/3] overflow-hidden rounded-lg bg-gradient-to-br ${item.tone}`}
-                >
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_16%,rgba(255,255,255,0.24),transparent_24%)]" />
-                  <div className="absolute left-1/2 top-6 h-[72%] w-[42%] -translate-x-1/2 rounded-[1.5rem] border border-white/30 bg-white/10 shadow-xl shadow-black/30 backdrop-blur-md" />
-                  <div className="absolute bottom-4 left-1/2 h-8 w-28 -translate-x-1/2 rounded-full bg-white/20 blur-xl" />
-                </Link>
-
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
-                      {item.finish}
-                    </p>
-                    <Link
-                      to={`/products/${item.id}`}
-                      className="mt-2 block text-xl font-semibold text-zinc-950 transition hover:text-zinc-700"
-                    >
-                      {item.name}
-                    </Link>
-                    <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-600">
-                      {item.spec}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => removeFromCart(item.id)}
-                      className="mt-4 text-sm font-semibold text-zinc-500 transition hover:text-zinc-950"
-                    >
-                      Remove
-                    </button>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
-                    <p className="text-lg font-semibold text-zinc-950">
-                      {item.price}
-                    </p>
-                    <div className="flex items-center rounded-full border border-zinc-200 bg-zinc-50 p-1">
-                      <button
-                        type="button"
-                        onClick={() => decreaseQuantity(item.id)}
-                        className="grid h-10 w-10 place-items-center rounded-full text-lg font-semibold text-zinc-700 transition hover:bg-white hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
-                        aria-label={
-                          item.quantity === 1
-                            ? `Remove ${item.name} from bag`
-                            : `Decrease ${item.name} quantity`
-                        }
-                      >
-                        -
-                      </button>
-                      <span
-                        className="grid min-w-10 place-items-center text-sm font-semibold text-zinc-950"
-                        aria-live="polite"
-                        aria-label={`${item.name} quantity ${item.quantity}`}
-                      >
-                        {item.quantity}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => increaseQuantity(item.id)}
-                        className="grid h-10 w-10 place-items-center rounded-full text-lg font-semibold text-zinc-700 transition hover:bg-white hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
-                        aria-label={`Increase ${item.name} quantity`}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
+              <CartLineItem
+                key={item.productId}
+                item={item}
+                removeFromCart={removeFromCart}
+                increaseQuantity={increaseQuantity}
+                decreaseQuantity={decreaseQuantity}
+              />
             ))}
           </div>
 
@@ -162,7 +92,7 @@ export default function CartPage() {
               <div className="flex justify-between gap-4">
                 <span>Subtotal</span>
                 <span className="font-semibold text-zinc-950">
-                  {currencyFormatter.format(subtotal)}
+                  {formatPrice(subtotal)}
                 </span>
               </div>
               <div className="flex justify-between gap-4">
@@ -178,7 +108,7 @@ export default function CartPage() {
                 Estimated total
               </span>
               <span className="text-2xl font-semibold text-zinc-950">
-                {currencyFormatter.format(subtotal)}
+                {formatPrice(subtotal)}
               </span>
             </div>
             <Link
@@ -197,5 +127,88 @@ export default function CartPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+function CartLineItem({
+  item,
+  removeFromCart,
+  increaseQuantity,
+  decreaseQuantity,
+}) {
+  const product = item.productSnapshot;
+
+  return (
+    <article className="grid gap-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-950/5 sm:grid-cols-[9rem_1fr] sm:p-5">
+      <Link
+        to={`/products/${item.productId}`}
+        aria-label={`View ${product.name} details`}
+        className={`relative aspect-[4/3] overflow-hidden rounded-lg bg-gradient-to-br ${product.tone}`}
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_16%,rgba(255,255,255,0.24),transparent_24%)]" />
+        <div className="absolute left-1/2 top-6 h-[72%] w-[42%] -translate-x-1/2 rounded-[1.5rem] border border-white/30 bg-white/10 shadow-xl shadow-black/30 backdrop-blur-md" />
+        <div className="absolute bottom-4 left-1/2 h-8 w-28 -translate-x-1/2 rounded-full bg-white/20 blur-xl" />
+      </Link>
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
+            {product.finish}
+          </p>
+          <Link
+            to={`/products/${item.productId}`}
+            className="mt-2 block text-xl font-semibold text-zinc-950 transition hover:text-zinc-700"
+          >
+            {product.name}
+          </Link>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-zinc-600">
+            {product.spec}
+          </p>
+          <button
+            type="button"
+            onClick={() => removeFromCart(item.productId)}
+            aria-label={`Remove ${product.name} from bag`}
+            className="mt-4 text-sm font-semibold text-zinc-500 transition hover:text-zinc-950"
+          >
+            Remove
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end">
+          <p className="text-lg font-semibold text-zinc-950">
+            {formatPrice(product.priceCents, product.currency)}
+          </p>
+          <div className="flex items-center rounded-full border border-zinc-200 bg-zinc-50 p-1">
+            <button
+              type="button"
+              onClick={() => decreaseQuantity(item.productId)}
+              className="grid h-10 w-10 place-items-center rounded-full text-lg font-semibold text-zinc-700 transition hover:bg-white hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+              aria-label={
+                item.quantity === 1
+                  ? `Remove ${product.name} from bag`
+                  : `Decrease ${product.name} quantity`
+              }
+            >
+              -
+            </button>
+            <span
+              className="grid min-w-10 place-items-center text-sm font-semibold text-zinc-950"
+              aria-live="polite"
+              aria-label={`${product.name} quantity ${item.quantity}`}
+            >
+              {item.quantity}
+            </span>
+            <button
+              type="button"
+              onClick={() => increaseQuantity(item.productId)}
+              className="grid h-10 w-10 place-items-center rounded-full text-lg font-semibold text-zinc-700 transition hover:bg-white hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2"
+              aria-label={`Increase ${product.name} quantity`}
+            >
+              +
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }

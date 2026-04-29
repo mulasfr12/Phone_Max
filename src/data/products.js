@@ -5,7 +5,8 @@ export const products = [
     category: 'Phones',
     finish: 'Graphite Titanium',
     spec: 'Titanium frame, 256GB, night lens system',
-    price: '$1,199',
+    priceCents: 119900,
+    currency: 'USD',
     shortDescription:
       'A flagship phone tuned for low-light photography, daily speed, and a calmer premium feel.',
     features: [
@@ -24,7 +25,8 @@ export const products = [
     category: 'Phones',
     finish: 'Liquid Silver',
     spec: '7.6-inch inner display, 512GB, hinge care',
-    price: '$1,649',
+    priceCents: 164900,
+    currency: 'USD',
     shortDescription:
       'A refined foldable for multitasking, reading, and watching without carrying a tablet.',
     features: [
@@ -43,7 +45,8 @@ export const products = [
     category: 'Audio',
     finish: 'Soft Pearl',
     spec: 'Adaptive audio, low-latency mode, wireless case',
-    price: '$249',
+    priceCents: 24900,
+    currency: 'USD',
     shortDescription:
       'Compact wireless audio with clean noise control and a soft-touch case.',
     features: [
@@ -62,7 +65,8 @@ export const products = [
     category: 'Charging',
     finish: 'Midnight Steel',
     spec: '15W phone charging, watch stand, woven cable',
-    price: '$139',
+    priceCents: 13900,
+    currency: 'USD',
     shortDescription:
       'A compact desk and nightstand dock for phone, watch, and daily charging.',
     features: [
@@ -81,7 +85,8 @@ export const products = [
     category: 'Cases',
     finish: 'Smoked Quartz',
     spec: 'Slim shell, soft lining, camera lip',
-    price: '$69',
+    priceCents: 6900,
+    currency: 'USD',
     shortDescription:
       'A restrained protective case with a satin exterior and precise camera coverage.',
     features: [
@@ -100,7 +105,8 @@ export const products = [
     category: 'Wearables',
     finish: 'Platinum Weave',
     spec: 'Woven band, stainless clasp, all-day comfort',
-    price: '$89',
+    priceCents: 8900,
+    currency: 'USD',
     shortDescription:
       'A refined wearable strap with a soft weave and polished clasp for daily wear.',
     features: [

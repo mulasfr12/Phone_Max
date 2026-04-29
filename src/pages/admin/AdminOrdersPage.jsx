@@ -1,13 +1,18 @@
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
 import { mockOrderRequests } from '../../data/adminData.js';
+import { formatPrice } from '../../utils/money.js';
 
 const orderColumns = [
   { key: 'id', label: 'Request' },
   { key: 'customerName', label: 'Customer' },
   { key: 'phone', label: 'Phone' },
   { key: 'itemsCount', label: 'Items' },
-  { key: 'subtotal', label: 'Subtotal' },
+  {
+    key: 'subtotalCents',
+    label: 'Subtotal',
+    render: (order) => formatPrice(order.subtotalCents, order.currency),
+  },
   {
     key: 'status',
     label: 'Status',
@@ -31,6 +36,7 @@ export default function AdminOrdersPage() {
         interface placeholders.
       </div>
       <AdminTable
+        label="Mock order request queue"
         columns={orderColumns}
         rows={mockOrderRequests}
         renderActions={(order) => (

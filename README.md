@@ -30,6 +30,8 @@ Luxora does not have a backend yet. There are no API calls, authentication, paym
 
 The cart is stored locally in the browser. The checkout page creates a local request preview only and does not submit data to a server. Admin pages use mock/local data and do not persist product or order changes.
 
+Product prices are stored as `priceCents` plus `currency` and formatted in the UI. Cart items store a `productId`, `quantity`, and a local product snapshot for frontend-only display.
+
 ## Routes
 
 - `/` storefront homepage
@@ -97,3 +99,7 @@ Luxora should feel like a luxury gadget boutique:
 Animation should support the shopping experience. GSAP belongs only in the hero, Swiper belongs only in featured products, and Motion should remain subtle.
 
 Page routes are lazy-loaded with `React.lazy` and `Suspense` so heavier storefront/admin surfaces are loaded only when visited.
+
+## Deployment Note
+
+This app uses `BrowserRouter`. Production static hosting must route all unknown paths back to `index.html` so direct visits to routes like `/products/aura-x1` or `/admin/orders` work. On Vercel, use rewrites; on other static hosts, use the equivalent single-page app fallback.

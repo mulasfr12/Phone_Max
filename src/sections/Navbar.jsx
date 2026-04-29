@@ -58,6 +58,8 @@ export default function Navbar() {
         <div className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-black/20 p-1 shadow-lg shadow-black/20 backdrop-blur-xl sm:bg-transparent sm:p-0 sm:shadow-none">
           <button
             type="button"
+            aria-label="Search coming later"
+            title="Search coming later"
             className="rounded-full border border-white/15 bg-white/[0.04] px-3 py-2 text-xs font-medium text-white shadow-lg shadow-black/20 backdrop-blur-xl transition hover:border-white/35 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/80 sm:px-4 sm:text-sm"
           >
             Search

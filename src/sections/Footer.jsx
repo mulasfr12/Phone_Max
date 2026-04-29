@@ -3,15 +3,30 @@ import { Link } from 'react-router-dom';
 const footerGroups = [
   {
     title: 'Shop',
-    links: ['Phones', 'Accessories', 'Audio', 'Wearables'],
+    links: [
+      { label: 'Phones', to: '/products' },
+      { label: 'Accessories', to: '/products' },
+      { label: 'Audio', to: '/products' },
+      { label: 'Wearables', to: '/products' },
+    ],
   },
   {
     title: 'Support',
-    links: ['Delivery', 'Returns', 'Warranty', 'Contact'],
+    links: [
+      { label: 'Delivery', to: '/support' },
+      { label: 'Returns', to: '/support' },
+      { label: 'Warranty', to: '/support' },
+      { label: 'Contact', to: '/support' },
+    ],
   },
   {
     title: 'Company',
-    links: ['About', 'Journal', 'Stores', 'Careers'],
+    links: [
+      { label: 'About' },
+      { label: 'Journal' },
+      { label: 'Stores' },
+      { label: 'Careers' },
+    ],
   },
 ];
 
@@ -38,13 +53,19 @@ export default function Footer() {
               <h2 className="text-sm font-semibold text-white">{group.title}</h2>
               <ul className="mt-4 space-y-3">
                 {group.links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#top"
-                      className="text-sm text-zinc-400 transition hover:text-white"
-                    >
-                      {link}
-                    </a>
+                  <li key={link.label}>
+                    {link.to ? (
+                      <Link
+                        to={link.to}
+                        className="text-sm text-zinc-400 transition hover:text-white"
+                      >
+                        {link.label}
+                      </Link>
+                    ) : (
+                      <span className="text-sm text-zinc-600">
+                        {link.label} coming later
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>

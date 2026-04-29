@@ -1,8 +1,16 @@
-export default function AdminTable({ columns, rows, renderActions }) {
+export default function AdminTable({
+  columns,
+  rows,
+  renderActions,
+  label = 'Admin data table',
+}) {
   return (
     <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm shadow-zinc-950/5">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-zinc-100 text-left text-sm">
+        <table
+          className="min-w-full divide-y divide-zinc-100 text-left text-sm"
+          aria-label={label}
+        >
           <thead className="bg-zinc-50 text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">
             <tr>
               {columns.map((column) => (
