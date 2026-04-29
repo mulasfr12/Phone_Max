@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+import { ApiError } from '../api/apiClient.js';
+import { createCheckoutRequest } from '../api/checkoutRequestsApi.js';
 import { useCart } from '../context/CartContext.jsx';
 import { formatPrice } from '../utils/money.js';
 
@@ -9,7 +11,12 @@ const inputClassName =
 
 export default function CheckoutPage() {
   const { items, itemCount, subtotal } = useCart();
-  const [requestReference, setRequestReference] = useState(null);
+  const [submissionState, setSubmissionState] = useState({
+    isSubmitting: false,
+    mode: null,
+    reference: null,
+    message: null,
+  });
   const [formData, setFormData] = useState({
     fullName: '',
     phone: '',
@@ -36,16 +43,85 @@ export default function CheckoutPage() {
       ...currentData,
       [name]: value,
     }));
-    setRequestReference(null);
+    setSubmissionState({
+      isSubmitting: false,
+      mode: null,
+      reference: null,
+      message: null,
+    });
   }
 
-  function handleSubmit(event) {
+  function buildCheckoutPayload() {
+    return {
+      customerName: formData.fullName.trim(),
+      phone: formData.phone.trim(),
+      email: formData.email.trim() || null,
+      fulfillmentPreference: formData.preference,
+      paymentMethod: formData.paymentMethod,
+      notes: formData.notes.trim() || null,
+      items: items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+    };
+  }
+
+  function getValidationMessage(error) {
+    const errors = error.details?.errors;
+
+    if (Array.isArray(errors)) {
+      return errors.join(' ');
+    }
+
+    if (errors && typeof errors === 'object') {
+      return Object.values(errors).flat().join(' ');
+    }
+
+    return error.message || 'Please check the request details and try again.';
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault();
-    if (!canSubmit) {
+    if (!canSubmit || submissionState.isSubmitting) {
       return;
     }
 
-    setRequestReference(referenceNumber);
+    setSubmissionState({
+      isSubmitting: true,
+      mode: null,
+      reference: null,
+      message: null,
+    });
+
+    try {
+      const checkoutRequest = await createCheckoutRequest(buildCheckoutPayload());
+
+      setSubmissionState({
+        isSubmitting: false,
+        mode: 'api',
+        reference: checkoutRequest.id,
+        message:
+          'Your checkout request was created in the backend. Your bag is still available.',
+      });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setSubmissionState({
+          isSubmitting: false,
+          mode: 'error',
+          reference: null,
+          message: getValidationMessage(error),
+        });
+        return;
+      }
+
+      setSubmissionState({
+        isSubmitting: false,
+        mode: 'local',
+        reference: referenceNumber,
+        message:
+          'Saved locally for preview only. The backend could not be reached, so nothing was submitted to the server.',
+      });
+    }
   }
 
   if (items.length === 0) {
@@ -106,18 +182,49 @@ export default function CheckoutPage() {
             onSubmit={handleSubmit}
             className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm shadow-zinc-950/5 sm:p-8"
           >
-            {requestReference && (
+            {submissionState.mode === 'api' && (
               <div
                 className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4"
                 role="status"
                 aria-live="polite"
               >
                 <p className="text-sm font-semibold text-emerald-800">
-                  Local request preview created.
+                  Checkout request created.
                 </p>
                 <p className="mt-1 text-sm leading-6 text-emerald-700">
-                  Reference {requestReference}. Nothing was submitted to a
-                  server, and your cart is still available.
+                  Reference {submissionState.reference}.{' '}
+                  {submissionState.message}
+                </p>
+              </div>
+            )}
+
+            {submissionState.mode === 'local' && (
+              <div
+                className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4"
+                role="status"
+                aria-live="polite"
+              >
+                <p className="text-sm font-semibold text-amber-800">
+                  Local request preview saved.
+                </p>
+                <p className="mt-1 text-sm leading-6 text-amber-700">
+                  Reference {submissionState.reference}.{' '}
+                  {submissionState.message}
+                </p>
+              </div>
+            )}
+
+            {submissionState.mode === 'error' && (
+              <div
+                className="mb-6 rounded-lg border border-rose-200 bg-rose-50 p-4"
+                role="alert"
+                aria-live="assertive"
+              >
+                <p className="text-sm font-semibold text-rose-800">
+                  Checkout request needs attention.
+                </p>
+                <p className="mt-1 text-sm leading-6 text-rose-700">
+                  {submissionState.message}
                 </p>
               </div>
             )}
@@ -207,17 +314,27 @@ export default function CheckoutPage() {
             <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-600">
               No online payment is processed here. Pay on delivery is settled
               in person; manual LIPA payments would require admin confirmation
-              later. This button only creates a local prototype confirmation in
-              your browser.
+              later. Luxora sends only item ids and quantities to the backend;
+              totals are calculated by the server.
             </div>
+
+            {formData.paymentMethod === 'manual_lipa_payment' && (
+              <div className="mt-4 rounded-lg border border-zinc-200 bg-white p-4 text-sm leading-6 text-zinc-600">
+                Manual LIPA payment is a request option only. Use the store LIPA
+                number and instructions provided by staff after confirmation;
+                payment is not automatically verified.
+              </div>
+            )}
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 type="submit"
-                disabled={!canSubmit}
+                disabled={!canSubmit || submissionState.isSubmitting}
                 className="rounded-full bg-zinc-950 px-6 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-4 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
               >
-                Submit local request
+                {submissionState.isSubmitting
+                  ? 'Submitting request...'
+                  : 'Submit checkout request'}
               </button>
               <Link
                 to="/cart"

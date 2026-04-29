@@ -1,5 +1,9 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
+import { ApiError } from '../api/apiClient.js';
+import { normalizeProduct } from '../api/productMappers.js';
+import { getProductById } from '../api/productsApi.js';
 import ProductCard from '../components/ProductCard.jsx';
 import { useCart } from '../context/CartContext.jsx';
 import { products } from '../data/products.js';
@@ -101,9 +105,147 @@ function DetailProductVisual({ product }) {
 export default function ProductDetailsPage() {
   const { id } = useParams();
   const { addToCart } = useCart();
-  const product = products.find((item) => item.id === id);
+  const [product, setProduct] = useState(null);
+  const [status, setStatus] = useState({
+    isLoading: true,
+    isPreview: false,
+    isNotFound: false,
+    error: null,
+  });
 
-  if (!product) {
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadProduct() {
+      setStatus({
+        isLoading: true,
+        isPreview: false,
+        isNotFound: false,
+        error: null,
+      });
+
+      try {
+        const apiProduct = await getProductById(id);
+
+        if (!isActive) {
+          return;
+        }
+
+        setProduct(normalizeProduct(apiProduct));
+        setStatus({
+          isLoading: false,
+          isPreview: false,
+          isNotFound: false,
+          error: null,
+        });
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        if (error instanceof ApiError && error.status === 404) {
+          setProduct(null);
+          setStatus({
+            isLoading: false,
+            isPreview: false,
+            isNotFound: true,
+            error: null,
+          });
+          return;
+        }
+
+        const localProduct = products.find((item) => item.id === id);
+
+        if (!(error instanceof ApiError) && localProduct) {
+          setProduct(localProduct);
+          setStatus({
+            isLoading: false,
+            isPreview: true,
+            isNotFound: false,
+            error:
+              error.message ||
+              'The backend product endpoint is unavailable, so local preview data is shown.',
+          });
+          return;
+        }
+
+        setProduct(null);
+        setStatus({
+          isLoading: false,
+          isPreview: false,
+          isNotFound: false,
+          error:
+            error.message ||
+            'The product could not be loaded from the backend.',
+        });
+      }
+    }
+
+    loadProduct();
+
+    return () => {
+      isActive = false;
+    };
+  }, [id]);
+
+  const relatedProducts = useMemo(() => {
+    if (!product) {
+      return [];
+    }
+
+    return products
+      .filter((item) => item.id !== product.id)
+      .sort(
+        (a, b) =>
+          Number(b.category === product.category) -
+          Number(a.category === product.category),
+      )
+      .slice(0, 3);
+  }, [product]);
+
+  if (status.isLoading) {
+    return (
+      <main className="bg-zinc-50 px-5 py-16 sm:px-8 sm:py-24">
+        <section className="mx-auto max-w-3xl rounded-lg border border-zinc-200 bg-white p-8 shadow-sm shadow-zinc-950/5">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+            Loading product
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold text-zinc-950">
+            Preparing the product view.
+          </h1>
+          <p className="mt-4 text-sm leading-7 text-zinc-600">
+            Luxora is checking the backend catalog.
+          </p>
+        </section>
+      </main>
+    );
+  }
+
+  if (status.error && !product) {
+    return (
+      <main className="bg-zinc-50 px-5 py-16 sm:px-8 sm:py-24">
+        <section className="mx-auto max-w-3xl rounded-lg border border-zinc-200 bg-white p-8 shadow-sm shadow-zinc-950/5">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-500">
+            Product error
+          </p>
+          <h1 className="mt-3 text-3xl font-semibold text-zinc-950">
+            This product could not be loaded.
+          </h1>
+          <p className="mt-4 text-sm leading-7 text-zinc-600">
+            {status.error}
+          </p>
+          <Link
+            to="/products"
+            className="mt-6 inline-flex rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-4"
+          >
+            Back to products
+          </Link>
+        </section>
+      </main>
+    );
+  }
+
+  if (status.isNotFound || !product) {
     return (
       <main className="bg-zinc-50 px-5 py-16 sm:px-8 sm:py-24">
         <section className="mx-auto max-w-3xl rounded-lg border border-zinc-200 bg-white p-8 shadow-sm shadow-zinc-950/5">
@@ -124,13 +266,17 @@ export default function ProductDetailsPage() {
     );
   }
 
-  const relatedProducts = products
-    .filter((item) => item.id !== product.id)
-    .sort((a, b) => Number(b.category === product.category) - Number(a.category === product.category))
-    .slice(0, 3);
-
   return (
     <main className="bg-zinc-50 px-5 py-10 sm:px-8 sm:py-16">
+      {status.isPreview && (
+        <section className="mx-auto mb-6 max-w-7xl">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+            <p className="font-semibold">Using local preview data.</p>
+            <p className="mt-1">{status.error}</p>
+          </div>
+        </section>
+      )}
+
       <section className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
         <DetailProductVisual product={product} />
 

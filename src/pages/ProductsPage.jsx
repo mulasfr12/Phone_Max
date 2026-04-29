@@ -1,16 +1,104 @@
+import { useEffect, useMemo, useState } from 'react';
+
+import { getCategories } from '../api/categoriesApi.js';
+import {
+  normalizeCategories,
+  normalizeProducts,
+} from '../api/productMappers.js';
+import { getProducts } from '../api/productsApi.js';
 import ProductCard from '../components/ProductCard.jsx';
+import { categories as localCategories } from '../data/homeData.js';
 import { products } from '../data/products.js';
 
-const categoryChips = [
-  'All',
-  'Phones',
-  'Cases',
-  'Charging',
-  'Audio',
-  'Wearables',
-];
-
 export default function ProductsPage() {
+  const [catalogProducts, setCatalogProducts] = useState([]);
+  const [catalogCategories, setCatalogCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortMode, setSortMode] = useState('featured');
+  const [status, setStatus] = useState({
+    isLoading: true,
+    isPreview: false,
+    error: null,
+  });
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadCatalog() {
+      setStatus({ isLoading: true, isPreview: false, error: null });
+
+      try {
+        const [apiProducts, apiCategories] = await Promise.all([
+          getProducts(),
+          getCategories(),
+        ]);
+
+        if (!isActive) {
+          return;
+        }
+
+        setCatalogProducts(normalizeProducts(apiProducts));
+        setCatalogCategories(normalizeCategories(apiCategories));
+        setStatus({ isLoading: false, isPreview: false, error: null });
+      } catch (error) {
+        if (!isActive) {
+          return;
+        }
+
+        setCatalogProducts(products);
+        setCatalogCategories(localCategories);
+        setStatus({
+          isLoading: false,
+          isPreview: true,
+          error:
+            error.message ||
+            'The backend catalog is unavailable, so local preview data is shown.',
+        });
+      }
+    }
+
+    loadCatalog();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const categoryChips = useMemo(
+    () => ['All', ...catalogCategories.map((category) => category.name)],
+    [catalogCategories],
+  );
+
+  const visibleProducts = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    const filteredProducts = catalogProducts.filter((product) => {
+      const matchesCategory =
+        activeCategory === 'All' || product.category === activeCategory;
+      const matchesSearch =
+        normalizedSearch.length === 0 ||
+        [product.name, product.finish, product.spec, product.shortDescription]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(normalizedSearch));
+
+      return matchesCategory && matchesSearch;
+    });
+
+    if (sortMode === 'price-low') {
+      return [...filteredProducts].sort(
+        (firstProduct, secondProduct) =>
+          firstProduct.priceCents - secondProduct.priceCents,
+      );
+    }
+
+    if (sortMode === 'newest') {
+      return [...filteredProducts].reverse();
+    }
+
+    return filteredProducts;
+  }, [activeCategory, catalogProducts, searchTerm, sortMode]);
+
   return (
     <main className="bg-zinc-50">
       <section className="relative overflow-hidden bg-zinc-950 px-5 pb-12 pt-16 text-white sm:px-8 sm:pb-16 sm:pt-20">
@@ -32,19 +120,36 @@ export default function ProductsPage() {
           <div className="grid grid-cols-2 gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-4 text-sm text-zinc-300 backdrop-blur-md sm:min-w-80">
             <div>
               <p className="text-2xl font-semibold text-white">
-                {products.length}
+                {catalogProducts.length}
               </p>
               <p className="mt-1">Curated items</p>
             </div>
             <div>
-              <p className="text-2xl font-semibold text-white">Local</p>
-              <p className="mt-1">Mock catalog</p>
+              <p className="text-2xl font-semibold text-white">
+                {status.isPreview ? 'Local' : 'API'}
+              </p>
+              <p className="mt-1">
+                {status.isPreview ? 'Preview catalog' : 'Backend catalog'}
+              </p>
             </div>
           </div>
         </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-5 py-8 sm:px-8 sm:py-12">
+        {status.isLoading && (
+          <div className="rounded-lg border border-zinc-200 bg-white p-5 text-sm font-semibold text-zinc-600 shadow-sm shadow-zinc-950/5">
+            Loading Luxora catalog...
+          </div>
+        )}
+
+        {!status.isLoading && status.error && (
+          <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+            <p className="font-semibold">Using local preview data.</p>
+            <p className="mt-1">{status.error}</p>
+          </div>
+        )}
+
         <div className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-950/5 sm:p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex gap-2 overflow-x-auto pb-1">
@@ -52,8 +157,9 @@ export default function ProductsPage() {
                 <button
                   key={category}
                   type="button"
+                  onClick={() => setActiveCategory(category)}
                   className={`shrink-0 rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                    category === 'All'
+                    category === activeCategory
                       ? 'border-zinc-950 bg-zinc-950 text-white'
                       : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400'
                   }`}
@@ -70,6 +176,8 @@ export default function ProductsPage() {
               <input
                 id="product-search"
                 type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Search Luxora products"
                 className="min-h-11 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-500 focus:bg-white"
               />
@@ -79,7 +187,8 @@ export default function ProductsPage() {
               <select
                 id="product-sort"
                 className="min-h-11 rounded-full border border-zinc-200 bg-zinc-50 px-4 text-sm font-semibold text-zinc-700 outline-none transition focus:border-zinc-500 focus:bg-white"
-                defaultValue="featured"
+                value={sortMode}
+                onChange={(event) => setSortMode(event.target.value)}
               >
                 <option value="featured">Featured</option>
                 <option value="newest">Newest</option>
@@ -88,15 +197,26 @@ export default function ProductsPage() {
             </div>
           </div>
           <p className="mt-3 text-xs text-zinc-500">
-            Filters are visual placeholders until catalog logic is added.
+            Filters run locally on the currently loaded catalog.
           </p>
         </div>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product) => (
+          {visibleProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
+
+        {!status.isLoading && visibleProducts.length === 0 && (
+          <div className="mt-8 rounded-lg border border-zinc-200 bg-white p-8 text-center shadow-sm shadow-zinc-950/5">
+            <p className="text-sm font-semibold text-zinc-950">
+              No products match this view.
+            </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              Try another category or search term.
+            </p>
+          </div>
+        )}
       </section>
     </main>
   );

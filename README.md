@@ -70,7 +70,7 @@ Configure the backend API base URL:
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-The React app still uses local mock data by default. The API client layer is ready for the next integration step, but product/category pages and checkout are not wired to backend data yet.
+The product browsing pages use the backend when available and fall back to local preview data when the API cannot be reached. The homepage featured products, cart, checkout preview, and admin mockup still use local data for now.
 
 Start the local dev server:
 
@@ -138,11 +138,28 @@ POST /api/dev/seed
 
 `/api/dev/seed` is available only when the API runs in the Development environment. It inserts missing initial Luxora categories and products into MongoDB for local Swagger/API testing, and it does not overwrite existing records.
 
-Before testing API-backed product or category data, start MongoDB, run the backend, then call the seed endpoint once from Swagger or curl:
+Before testing API-backed product or category data on `/products` and `/products/:id`, start MongoDB, run the backend, then call the seed endpoint once from Swagger or curl:
 
 ```bash
 curl -X POST http://localhost:5000/api/dev/seed
 ```
+
+Then run the frontend with `VITE_API_BASE_URL` set in `.env`. If the backend is unavailable, the product browsing pages fall back to local preview data and show a small notice.
+
+To test checkout request submission:
+
+1. Start MongoDB.
+2. Run the ASP.NET backend.
+3. Call `POST /api/dev/seed` so checkout item ids exist in MongoDB.
+4. Set `VITE_API_BASE_URL` in `.env`.
+5. Run the frontend.
+6. Add products to the bag and submit `/checkout`.
+
+The checkout form sends customer details, fulfillment preference, payment method, notes, and item `productId`/`quantity` pairs. It does not send the frontend subtotal as trusted data; the backend recalculates totals from MongoDB products. If the backend is unavailable, the page falls back to a local preview confirmation and clearly labels it as local-only.
+
+`/admin/orders` can read and update backend checkout requests when the API is running. It supports local preview fallback when the backend is unavailable, but backend admin endpoints remain unprotected and must not be used in production until authentication and authorization are added.
+
+`/admin/products` and `/admin/categories` can read, create, update, and delete backend catalog records when the API is running. If the backend is unavailable, both pages show local preview data with mutation actions disabled. Admin catalog endpoints are still unprotected and must be secured before production.
 
 Unprotected admin endpoints for backend development only:
 
