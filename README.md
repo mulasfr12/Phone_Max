@@ -58,6 +58,20 @@ Install dependencies:
 npm install
 ```
 
+Create a local frontend env file from the example:
+
+```bash
+cp .env.example .env
+```
+
+Configure the backend API base URL:
+
+```text
+VITE_API_BASE_URL=http://localhost:5000/api
+```
+
+The React app still uses local mock data by default. The API client layer is ready for the next integration step, but product/category pages and checkout are not wired to backend data yet.
+
 Start the local dev server:
 
 ```bash
@@ -84,11 +98,21 @@ npm.cmd run dev
 
 ### Backend
 
+Run MongoDB locally before starting the API. With Docker, one simple local option is:
+
+```bash
+docker run --name luxora-mongo -p 27017:27017 -d mongo:7
+```
+
+If you already have a local MongoDB instance, make sure it is reachable at the connection string in `appsettings.json`.
+
 Run the ASP.NET Core API:
 
 ```bash
 dotnet run --project backend/Luxora.Api/Luxora.Api.csproj
 ```
+
+The frontend API client expects the backend to be running at `VITE_API_BASE_URL`. If your ASP.NET app uses a different local port, update `.env` and restart Vite.
 
 Health endpoint:
 
@@ -106,14 +130,40 @@ GET /api/categories/{id}
 POST /api/checkout-requests
 ```
 
+Development-only seed endpoint:
+
+```text
+POST /api/dev/seed
+```
+
+`/api/dev/seed` is available only when the API runs in the Development environment. It inserts missing initial Luxora categories and products into MongoDB for local Swagger/API testing, and it does not overwrite existing records.
+
+Before testing API-backed product or category data, start MongoDB, run the backend, then call the seed endpoint once from Swagger or curl:
+
+```bash
+curl -X POST http://localhost:5000/api/dev/seed
+```
+
 Unprotected admin endpoints for backend development only:
 
 ```text
+GET /api/admin/products
+GET /api/admin/products/{id}
+POST /api/admin/products
+PUT /api/admin/products/{id}
+DELETE /api/admin/products/{id}
+GET /api/admin/categories
+GET /api/admin/categories/{id}
+POST /api/admin/categories
+PUT /api/admin/categories/{id}
+DELETE /api/admin/categories/{id}
 GET /api/admin/checkout-requests
 GET /api/admin/checkout-requests/{id}
 PATCH /api/admin/checkout-requests/{id}/status
 PATCH /api/admin/checkout-requests/{id}/payment-status
 ```
+
+These admin API routes are intentionally temporary and unprotected for local backend development. They are not production-ready until admin authentication and authorization are added.
 
 Swagger is enabled in development:
 

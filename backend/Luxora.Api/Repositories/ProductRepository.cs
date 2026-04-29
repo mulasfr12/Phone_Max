@@ -69,4 +69,33 @@ public sealed class ProductRepository : IProductRepository
             .Find(product => product.Id == id)
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    public async Task CreateAsync(Product product, CancellationToken cancellationToken)
+    {
+        await _context.Products.InsertOneAsync(
+            product,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task<Product?> UpdateAsync(Product product, CancellationToken cancellationToken)
+    {
+        var result = await _context.Products.ReplaceOneAsync(
+            existingProduct => existingProduct.Id == product.Id,
+            product,
+            new ReplaceOptions(),
+            cancellationToken);
+
+        return result.MatchedCount == 0
+            ? null
+            : product;
+    }
+
+    public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken)
+    {
+        var result = await _context.Products.DeleteOneAsync(
+            product => product.Id == id,
+            cancellationToken);
+
+        return result.DeletedCount > 0;
+    }
 }

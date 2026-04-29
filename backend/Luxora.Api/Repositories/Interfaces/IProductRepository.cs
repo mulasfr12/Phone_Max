@@ -12,4 +12,10 @@ public interface IProductRepository
         CancellationToken cancellationToken);
 
     Task<Product?> GetByIdAsync(string id, CancellationToken cancellationToken);
+
+    Task CreateAsync(Product product, CancellationToken cancellationToken);
+
+    Task<Product?> UpdateAsync(Product product, CancellationToken cancellationToken);
+
+    Task<bool> DeleteAsync(string id, CancellationToken cancellationToken);
 }

@@ -29,4 +29,33 @@ public sealed class CategoryRepository : ICategoryRepository
             .Find(category => category.Id == id)
             .FirstOrDefaultAsync(cancellationToken);
     }
+
+    public async Task CreateAsync(Category category, CancellationToken cancellationToken)
+    {
+        await _context.Categories.InsertOneAsync(
+            category,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task<Category?> UpdateAsync(Category category, CancellationToken cancellationToken)
+    {
+        var result = await _context.Categories.ReplaceOneAsync(
+            existingCategory => existingCategory.Id == category.Id,
+            category,
+            new ReplaceOptions(),
+            cancellationToken);
+
+        return result.MatchedCount == 0
+            ? null
+            : category;
+    }
+
+    public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken)
+    {
+        var result = await _context.Categories.DeleteOneAsync(
+            category => category.Id == id,
+            cancellationToken);
+
+        return result.DeletedCount > 0;
+    }
 }

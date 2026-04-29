@@ -13,6 +13,7 @@ builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection(MongoDbSettings.SectionName));
 
 builder.Services.AddSingleton<MongoDbContext>();
+builder.Services.AddScoped<DatabaseSeeder>();
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
