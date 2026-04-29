@@ -47,6 +47,8 @@ Product prices are stored as `priceCents` plus `currency` and formatted in the U
 
 ## Getting Started
 
+### Frontend
+
 Install dependencies:
 
 ```bash
@@ -75,6 +77,38 @@ On Windows PowerShell, if `npm` is blocked by script execution policy, use `npm.
 
 ```bash
 npm.cmd run dev
+```
+
+### Backend
+
+Run the ASP.NET Core API:
+
+```bash
+dotnet run --project backend/Luxora.Api/Luxora.Api.csproj
+```
+
+Health endpoint:
+
+```text
+GET /api/health
+```
+
+Swagger is enabled in development:
+
+```text
+/swagger
+```
+
+MongoDB is configured in [backend/Luxora.Api/appsettings.json](backend/Luxora.Api/appsettings.json):
+
+```json
+"MongoDb": {
+  "ConnectionString": "mongodb://localhost:27017",
+  "DatabaseName": "LuxoraDb",
+  "ProductsCollectionName": "products",
+  "CategoriesCollectionName": "categories",
+  "CheckoutRequestsCollectionName": "checkoutRequests"
+}
 ```
 
 ## Project Guidance

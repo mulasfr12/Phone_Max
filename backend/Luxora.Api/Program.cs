@@ -5,6 +5,8 @@ using Luxora.Api.Services;
 using Luxora.Api.Services.Interfaces;
 using Luxora.Api.Settings;
 
+const string ViteCorsPolicy = "ViteCorsPolicy";
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MongoDbSettings>(
@@ -20,12 +22,31 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICheckoutRequestService, CheckoutRequestService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(ViteCorsPolicy, policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173", "https://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
 app.UseHttpsRedirection();
+app.UseCors(ViteCorsPolicy);
 app.MapControllers();
 
 app.Run();
