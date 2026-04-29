@@ -15,6 +15,7 @@ export default function CheckoutPage() {
     phone: '',
     email: '',
     preference: 'delivery',
+    paymentMethod: 'pay_on_delivery',
     notes: '',
   });
 
@@ -26,7 +27,8 @@ export default function CheckoutPage() {
   const canSubmit =
     formData.fullName.trim().length > 1 &&
     formData.phone.trim().length > 5 &&
-    Boolean(formData.preference);
+    Boolean(formData.preference) &&
+    Boolean(formData.paymentMethod);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -64,7 +66,8 @@ export default function CheckoutPage() {
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-zinc-600">
               Add an item before previewing the local checkout request flow.
-              No payment or account step has been added.
+              No online payment, account step, or server submission has been
+              added.
             </p>
             <Link
               to="/products"
@@ -94,7 +97,7 @@ export default function CheckoutPage() {
             an account.
           </p>
           <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-500">
-            Required: name, phone, delivery preference
+            Required: name, phone, delivery preference, payment method
           </p>
         </div>
 
@@ -172,6 +175,21 @@ export default function CheckoutPage() {
                   <option value="pickup">Boutique pickup request</option>
                 </select>
               </label>
+              <label className="text-sm font-semibold text-zinc-800">
+                Payment method <span className="text-zinc-500">(required)</span>
+                <select
+                  required
+                  name="paymentMethod"
+                  value={formData.paymentMethod}
+                  onChange={handleChange}
+                  className={inputClassName}
+                >
+                  <option value="pay_on_delivery">Pay on delivery</option>
+                  <option value="manual_lipa_payment">
+                    Manual LIPA payment
+                  </option>
+                </select>
+              </label>
             </div>
 
             <label className="mt-5 block text-sm font-semibold text-zinc-800">
@@ -187,8 +205,10 @@ export default function CheckoutPage() {
             </label>
 
             <div className="mt-6 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm leading-6 text-zinc-600">
-              No payment is processed here. This button only creates a local
-              prototype confirmation in your browser.
+              No online payment is processed here. Pay on delivery is settled
+              in person; manual LIPA payments would require admin confirmation
+              later. This button only creates a local prototype confirmation in
+              your browser.
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">

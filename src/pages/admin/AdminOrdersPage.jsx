@@ -3,6 +3,8 @@ import AdminTable from '../../components/admin/AdminTable.jsx';
 import { mockOrderRequests } from '../../data/adminData.js';
 import { formatPrice } from '../../utils/money.js';
 
+const formatAdminLabel = (value) => value.replaceAll('_', ' ');
+
 const orderColumns = [
   { key: 'id', label: 'Request' },
   { key: 'customerName', label: 'Customer' },
@@ -14,11 +16,25 @@ const orderColumns = [
     render: (order) => formatPrice(order.subtotalCents, order.currency),
   },
   {
+    key: 'paymentMethod',
+    label: 'Payment',
+    render: (order) => formatAdminLabel(order.paymentMethod),
+  },
+  {
+    key: 'paymentStatus',
+    label: 'Payment status',
+    render: (order) => (
+      <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">
+        {formatAdminLabel(order.paymentStatus)}
+      </span>
+    ),
+  },
+  {
     key: 'status',
     label: 'Status',
     render: (order) => (
       <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">
-        {order.status}
+        {formatAdminLabel(order.status)}
       </span>
     ),
   },
@@ -33,7 +49,8 @@ export default function AdminOrdersPage() {
     >
       <div className="mb-4 rounded-lg border border-zinc-200 bg-white p-4 text-sm leading-6 text-zinc-600 shadow-sm shadow-zinc-950/5">
         Order requests are mock/local for now. View and contacted actions are
-        interface placeholders.
+        interface placeholders. Backend admin request endpoints now exist, but
+        this screen is not connected to them yet and is not protected by auth.
       </div>
       <AdminTable
         label="Mock order request queue"

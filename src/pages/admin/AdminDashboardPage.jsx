@@ -6,6 +6,8 @@ import { categories } from '../../data/homeData.js';
 import { products } from '../../data/products.js';
 import { formatPrice } from '../../utils/money.js';
 
+const formatAdminLabel = (value) => value.replaceAll('_', ' ');
+
 const orderColumns = [
   { key: 'id', label: 'Request' },
   { key: 'customerName', label: 'Customer' },
@@ -16,11 +18,16 @@ const orderColumns = [
     render: (row) => formatPrice(row.subtotalCents, row.currency),
   },
   {
+    key: 'paymentStatus',
+    label: 'Payment',
+    render: (row) => formatAdminLabel(row.paymentStatus),
+  },
+  {
     key: 'status',
     label: 'Status',
     render: (row) => (
       <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-700">
-        {row.status}
+        {formatAdminLabel(row.status)}
       </span>
     ),
   },
@@ -28,7 +35,7 @@ const orderColumns = [
 
 export default function AdminDashboardPage() {
   const pendingOrders = mockOrderRequests.filter(
-    (order) => order.status === 'Pending',
+    (order) => order.status === 'pending',
   );
   const revenueEstimate = mockOrderRequests.reduce(
     (total, order) => total + order.subtotalCents,

@@ -25,6 +25,10 @@ public sealed class CheckoutRequest
 
     public string Status { get; set; } = "pending";
 
+    public string PaymentMethod { get; set; } = string.Empty;
+
+    public string PaymentStatus { get; set; } = string.Empty;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }

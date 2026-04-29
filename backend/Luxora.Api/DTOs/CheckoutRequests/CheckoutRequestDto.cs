@@ -11,4 +11,6 @@ public sealed record CheckoutRequestDto(
     int SubtotalCents,
     string Currency,
     string Status,
+    string PaymentMethod,
+    string PaymentStatus,
     DateTime CreatedAt);

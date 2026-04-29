@@ -6,7 +6,9 @@ export const mockOrderRequests = [
     itemsCount: 2,
     subtotalCents: 133800,
     currency: 'USD',
-    status: 'Pending',
+    status: 'pending',
+    paymentMethod: 'manual_lipa_payment',
+    paymentStatus: 'awaiting_manual_confirmation',
     requestedAt: 'Today, 10:24',
   },
   {
@@ -16,7 +18,9 @@ export const mockOrderRequests = [
     itemsCount: 1,
     subtotalCents: 24900,
     currency: 'USD',
-    status: 'Contacted',
+    status: 'contacted',
+    paymentMethod: 'pay_on_delivery',
+    paymentStatus: 'not_paid',
     requestedAt: 'Yesterday, 16:12',
   },
   {
@@ -26,7 +30,9 @@ export const mockOrderRequests = [
     itemsCount: 3,
     subtotalCents: 185700,
     currency: 'USD',
-    status: 'Pending',
+    status: 'pending',
+    paymentMethod: 'manual_lipa_payment',
+    paymentStatus: 'paid',
     requestedAt: 'Yesterday, 09:48',
   },
   {
@@ -36,7 +42,9 @@ export const mockOrderRequests = [
     itemsCount: 1,
     subtotalCents: 8900,
     currency: 'USD',
-    status: 'Low priority',
+    status: 'cancelled',
+    paymentMethod: 'pay_on_delivery',
+    paymentStatus: 'rejected',
     requestedAt: 'Apr 24, 14:05',
   },
 ];

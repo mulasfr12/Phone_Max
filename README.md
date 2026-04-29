@@ -23,12 +23,15 @@ Luxora is a premium mobile-first storefront for phones and accessories. The expe
 - Support page placeholder
 - Frontend-only admin dashboard mockup for catalog, categories, and order requests
 - Route-level lazy loading for page bundles
+- ASP.NET Core API foundation with health, product/category browsing, and checkout request endpoints
 
-## Frontend-Only Status
+## Current Integration Status
 
-Luxora does not have a backend yet. There are no API calls, authentication, payment processing, checkout processing, inventory services, or database connections.
+Luxora now has an ASP.NET Core backend foundation, but the React frontend still uses local mock data and does not call the API yet. There is no authentication, authorization, payment gateway integration, inventory service, email/SMS notification, or image upload flow.
 
 The cart is stored locally in the browser. The checkout page creates a local request preview only and does not submit data to a server. Admin pages use mock/local data and do not persist product or order changes.
+
+Backend checkout requests support `pay_on_delivery` and `manual_lipa_payment`, but no online payment is processed and manual LIPA payments are not automatically verified. Admin checkout request endpoints are currently unprotected and must be secured with authentication and authorization before production.
 
 Product prices are stored as `priceCents` plus `currency` and formatted in the UI. Cart items store a `productId`, `quantity`, and a local product snapshot for frontend-only display.
 
@@ -91,6 +94,25 @@ Health endpoint:
 
 ```text
 GET /api/health
+```
+
+Public storefront endpoints:
+
+```text
+GET /api/products
+GET /api/products/{id}
+GET /api/categories
+GET /api/categories/{id}
+POST /api/checkout-requests
+```
+
+Unprotected admin endpoints for backend development only:
+
+```text
+GET /api/admin/checkout-requests
+GET /api/admin/checkout-requests/{id}
+PATCH /api/admin/checkout-requests/{id}/status
+PATCH /api/admin/checkout-requests/{id}/payment-status
 ```
 
 Swagger is enabled in development:
