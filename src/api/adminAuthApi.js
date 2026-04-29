@@ -1,0 +1,19 @@
+import { apiGet, apiPost } from './apiClient.js';
+
+export function loginAdmin({ email, password }) {
+  return apiPost('/auth/admin/login', { email, password });
+}
+
+export function logoutAdmin() {
+  return apiPost('/auth/admin/logout');
+}
+
+export function getCurrentAdmin() {
+  return apiGet('/auth/admin/me');
+}
+
+export const adminAuthApi = {
+  loginAdmin,
+  logoutAdmin,
+  getCurrentAdmin,
+};

@@ -22,6 +22,7 @@ public sealed class AuthController : ControllerBase
     [HttpPost("login")]
     [ProducesResponseType(typeof(AdminAuthResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<AdminAuthResponseDto>> Login(
         AdminLoginRequestDto request,
         CancellationToken cancellationToken)
@@ -30,6 +31,11 @@ public sealed class AuthController : ControllerBase
 
         if (!result.IsSuccess)
         {
+            if (result.Errors.Contains("Invalid admin email or password."))
+            {
+                return Unauthorized(new { errors = result.Errors });
+            }
+
             return BadRequest(new { errors = result.Errors });
         }
 

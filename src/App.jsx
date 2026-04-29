@@ -2,7 +2,9 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 import CartToast from './components/CartToast.jsx';
+import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
+import { AdminAuthProvider } from './context/AdminAuthContext.jsx';
 import { CartProvider } from './context/CartContext.jsx';
 import Footer from './sections/Footer.jsx';
 import Navbar from './sections/Navbar.jsx';
@@ -14,6 +16,7 @@ const CartPage = lazy(() => import('./pages/CartPage.jsx'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage.jsx'));
 const SupportPage = lazy(() => import('./pages/SupportPage.jsx'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'));
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage.jsx'));
 const AdminDashboardPage = lazy(
   () => import('./pages/admin/AdminDashboardPage.jsx'),
 );
@@ -39,25 +42,56 @@ export default function App() {
   return (
     <BrowserRouter>
       <CartProvider>
-        <ScrollToTop />
-        <Navbar />
-        <Suspense fallback={<PageFallback />}>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/products" element={<ProductsPage />} />
-            <Route path="/products/:id" element={<ProductDetailsPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/support" element={<SupportPage />} />
-            <Route path="/admin" element={<AdminDashboardPage />} />
-            <Route path="/admin/products" element={<AdminProductsPage />} />
-            <Route path="/admin/orders" element={<AdminOrdersPage />} />
-            <Route path="/admin/categories" element={<AdminCategoriesPage />} />
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
-        </Suspense>
-        <CartToast />
-        <Footer />
+        <AdminAuthProvider>
+          <ScrollToTop />
+          <Navbar />
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/products/:id" element={<ProductDetailsPage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/support" element={<SupportPage />} />
+              <Route path="/admin/login" element={<AdminLoginPage />} />
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedAdminRoute>
+                    <AdminDashboardPage />
+                  </ProtectedAdminRoute>
+                }
+              />
+              <Route
+                path="/admin/products"
+                element={
+                  <ProtectedAdminRoute>
+                    <AdminProductsPage />
+                  </ProtectedAdminRoute>
+                }
+              />
+              <Route
+                path="/admin/orders"
+                element={
+                  <ProtectedAdminRoute>
+                    <AdminOrdersPage />
+                  </ProtectedAdminRoute>
+                }
+              />
+              <Route
+                path="/admin/categories"
+                element={
+                  <ProtectedAdminRoute>
+                    <AdminCategoriesPage />
+                  </ProtectedAdminRoute>
+                }
+              />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+          <CartToast />
+          <Footer />
+        </AdminAuthProvider>
       </CartProvider>
     </BrowserRouter>
   );

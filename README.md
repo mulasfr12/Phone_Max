@@ -199,6 +199,10 @@ PATCH /api/admin/checkout-requests/{id}/payment-status
 
 Admin auth uses an HttpOnly cookie named `Luxora.AdminAuth`. Frontend API requests must include credentials; the built-in API client does this with `credentials: 'include'`. Do not store admin tokens in localStorage.
 
+Frontend admin routes are protected by `/admin/login`. On app load, the frontend calls `GET /api/auth/admin/me` to restore an existing admin session from the HttpOnly cookie. Login calls `POST /api/auth/admin/login`; logout calls `POST /api/auth/admin/logout`. The frontend does not store admin tokens in `localStorage` or `sessionStorage`.
+
+The admin cookie currently uses `SameSite=Lax`, which is practical for local same-site development with Vite and the API. Production deployments with frontend and backend on different sites may require `SameSite=None` and `Secure=true`; review cookie domain, HTTPS, and CORS credentials settings before launch.
+
 Admin authorization is intentionally simple for now: one `Admin` role. Production still needs hardened account management, password rotation, lockout/rate limiting, deployment-specific cookie domain/SameSite review, and removal of development seed credentials.
 
 Swagger is enabled in development:

@@ -35,6 +35,8 @@ builder.Services
     {
         options.Cookie.Name = AdminAuthCookieName;
         options.Cookie.HttpOnly = true;
+        // Lax keeps local Vite/API development simple. If production uses
+        // different frontend/backend sites, review SameSite=None + Secure.
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
             ? CookieSecurePolicy.SameAsRequest

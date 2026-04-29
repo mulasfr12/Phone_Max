@@ -1,4 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+
+import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 
 const adminLinks = [
   { label: 'Overview', to: '/admin', end: true },
@@ -8,6 +10,14 @@ const adminLinks = [
 ];
 
 export default function AdminShell({ eyebrow, title, description, children }) {
+  const navigate = useNavigate();
+  const { admin, logout } = useAdminAuth();
+
+  async function handleLogout() {
+    await logout();
+    navigate('/admin/login', { replace: true });
+  }
+
   return (
     <main className="bg-zinc-100 px-4 py-6 sm:px-8 sm:py-10">
       <section className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[16rem_1fr]">
@@ -17,6 +27,16 @@ export default function AdminShell({ eyebrow, title, description, children }) {
               Luxora
             </p>
             <h2 className="mt-2 text-xl font-semibold">Admin</h2>
+            {admin && (
+              <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] p-3">
+                <p className="text-sm font-semibold text-white">
+                  {admin.fullName}
+                </p>
+                <p className="mt-1 truncate text-xs text-zinc-400">
+                  {admin.email}
+                </p>
+              </div>
+            )}
           </div>
           <nav className="mt-4 grid gap-1" aria-label="Admin navigation">
             {adminLinks.map((link) => (
@@ -37,9 +57,16 @@ export default function AdminShell({ eyebrow, title, description, children }) {
             ))}
           </nav>
           <p className="mt-5 rounded-lg border border-white/10 bg-white/[0.04] p-3 text-xs leading-5 text-zinc-400">
-            Frontend-only admin mockup. No protected access, persistence, or
-            backend connection exists yet.
+            Admin API access is protected by an HttpOnly cookie. Keep this area
+            limited to trusted operators.
           </p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="mt-4 w-full rounded-lg border border-white/10 px-4 py-3 text-sm font-semibold text-zinc-300 transition hover:border-white/25 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/80"
+          >
+            Sign out
+          </button>
         </aside>
 
         <div>
