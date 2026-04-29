@@ -71,9 +71,14 @@ const productColumns = [
     ),
   },
   {
+    key: 'createdAt',
+    label: 'Created',
+    render: (product) => formatDate(product.createdAt, 'Not recorded'),
+  },
+  {
     key: 'updatedAt',
     label: 'Updated',
-    render: (product) => formatDate(product.updatedAt),
+    render: (product) => formatDate(product.updatedAt, 'Never updated'),
   },
 ];
 
@@ -81,13 +86,13 @@ function formatAdminLabel(value) {
   return String(value || '').replaceAll('_', ' ');
 }
 
-function formatDate(value) {
+function formatDate(value, fallbackLabel) {
   return value
     ? new Intl.DateTimeFormat(undefined, {
         dateStyle: 'medium',
         timeStyle: 'short',
       }).format(new Date(value))
-    : 'Not updated';
+    : fallbackLabel;
 }
 
 function productToForm(product) {
@@ -173,7 +178,7 @@ export default function AdminProductsPage() {
         setProducts(localProducts);
         setStatus({
           isLoading: false,
-          isPreview: !(error instanceof ApiError),
+          isPreview: true,
           error:
             error.message ||
             'The backend catalog is unavailable, so local preview data is shown.',

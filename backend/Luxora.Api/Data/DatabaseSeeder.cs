@@ -1,4 +1,5 @@
 using Luxora.Api.Models;
+using Microsoft.AspNetCore.Identity;
 using MongoDB.Driver;
 
 namespace Luxora.Api.Data;
@@ -6,10 +7,14 @@ namespace Luxora.Api.Data;
 public sealed class DatabaseSeeder
 {
     private readonly MongoDbContext _context;
+    private readonly IPasswordHasher<AdminUser> _passwordHasher;
 
-    public DatabaseSeeder(MongoDbContext context)
+    public DatabaseSeeder(
+        MongoDbContext context,
+        IPasswordHasher<AdminUser> passwordHasher)
     {
         _context = context;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<SeedResult> SeedAsync(CancellationToken cancellationToken)
@@ -17,8 +22,46 @@ public sealed class DatabaseSeeder
         var now = DateTime.UtcNow;
         var categoriesInserted = await SeedCategoriesAsync(now, cancellationToken);
         var productsInserted = await SeedProductsAsync(now, cancellationToken);
+        var adminUsersInserted = await SeedDevelopmentAdminAsync(now, cancellationToken);
 
-        return new SeedResult(categoriesInserted, productsInserted);
+        return new SeedResult(
+            categoriesInserted,
+            productsInserted,
+            adminUsersInserted);
+    }
+
+    private async Task<int> SeedDevelopmentAdminAsync(
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        const string adminEmail = "admin@luxora.local";
+
+        var adminExists = await _context.AdminUsers
+            .Find(adminUser => adminUser.Email == adminEmail)
+            .AnyAsync(cancellationToken);
+
+        if (adminExists)
+        {
+            return 0;
+        }
+
+        var adminUser = new AdminUser
+        {
+            Id = "admin-luxora-local",
+            FullName = "Luxora Admin",
+            Email = adminEmail,
+            Role = "Admin",
+            CreatedAt = now
+        };
+        adminUser.PasswordHash = _passwordHasher.HashPassword(
+            adminUser,
+            "ChangeMe123!");
+
+        await _context.AdminUsers.InsertOneAsync(
+            adminUser,
+            cancellationToken: cancellationToken);
+
+        return 1;
     }
 
     private async Task<int> SeedCategoriesAsync(

@@ -51,6 +51,15 @@ function getCategoryTone(category) {
   return category.tone || toneByCategory[category.id] || toneByCategory.accessories;
 }
 
+function formatDate(value, fallbackLabel) {
+  return value
+    ? new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(new Date(value))
+    : fallbackLabel;
+}
+
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -101,7 +110,7 @@ export default function AdminCategoriesPage() {
         setProducts(localProducts);
         setStatus({
           isLoading: false,
-          isPreview: !(error instanceof ApiError),
+          isPreview: true,
           error:
             error.message ||
             'The backend categories endpoint is unavailable, so local preview data is shown.',
@@ -264,6 +273,20 @@ export default function AdminCategoriesPage() {
               <p className="mt-3 text-sm leading-7 text-zinc-600">
                 {category.description}
               </p>
+              <dl className="mt-4 grid gap-2 text-xs text-zinc-500">
+                <div className="flex justify-between gap-3">
+                  <dt className="font-semibold uppercase tracking-[0.12em]">
+                    Created
+                  </dt>
+                  <dd>{formatDate(category.createdAt, 'Not recorded')}</dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="font-semibold uppercase tracking-[0.12em]">
+                    Updated
+                  </dt>
+                  <dd>{formatDate(category.updatedAt, 'Never updated')}</dd>
+                </div>
+              </dl>
               <div className="mt-5 flex flex-wrap gap-2">
                 <button
                   type="button"

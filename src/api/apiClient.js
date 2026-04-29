@@ -48,6 +48,7 @@ async function parseJsonResponse(response) {
 async function apiRequest(path, { method = 'GET', query, body, headers } = {}) {
   const response = await fetch(buildUrl(path, query), {
     method,
+    credentials: 'include',
     headers: {
       Accept: 'application/json',
       ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),

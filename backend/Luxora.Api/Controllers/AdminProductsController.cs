@@ -1,11 +1,13 @@
 using Luxora.Api.DTOs.Products;
 using Luxora.Api.Services;
 using Luxora.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Luxora.Api.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Admin")]
 [Route("api/admin/products")]
 public sealed class AdminProductsController : ControllerBase
 {

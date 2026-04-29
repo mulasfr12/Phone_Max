@@ -17,6 +17,8 @@ public sealed class MongoDbContext
         Categories = database.GetCollection<Category>(settings.CategoriesCollectionName);
         CheckoutRequests = database.GetCollection<CheckoutRequest>(
             settings.CheckoutRequestsCollectionName);
+        AdminUsers = database.GetCollection<AdminUser>(
+            settings.AdminUsersCollectionName);
     }
 
     public IMongoCollection<Product> Products { get; }
@@ -24,4 +26,6 @@ public sealed class MongoDbContext
     public IMongoCollection<Category> Categories { get; }
 
     public IMongoCollection<CheckoutRequest> CheckoutRequests { get; }
+
+    public IMongoCollection<AdminUser> AdminUsers { get; }
 }

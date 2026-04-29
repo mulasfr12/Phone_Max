@@ -225,6 +225,8 @@ public sealed class ProductService : IProductService
             product.InStock,
             product.StockStatus,
             product.Visual,
-            product.Tone);
+            product.Tone,
+            product.CreatedAt,
+            product.UpdatedAt);
     }
 }

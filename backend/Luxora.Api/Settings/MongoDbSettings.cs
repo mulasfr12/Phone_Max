@@ -13,4 +13,6 @@ public sealed class MongoDbSettings
     public string CategoriesCollectionName { get; init; } = "categories";
 
     public string CheckoutRequestsCollectionName { get; init; } = "checkoutRequests";
+
+    public string AdminUsersCollectionName { get; init; } = "adminUsers";
 }

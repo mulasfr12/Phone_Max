@@ -27,11 +27,11 @@ Luxora is a premium mobile-first storefront for phones and accessories. The expe
 
 ## Current Integration Status
 
-Luxora now has an ASP.NET Core backend foundation, but the React frontend still uses local mock data and does not call the API yet. There is no authentication, authorization, payment gateway integration, inventory service, email/SMS notification, or image upload flow.
+Luxora now has an ASP.NET Core backend foundation and selected frontend routes call the API. There is no customer authentication, payment gateway integration, inventory service, email/SMS notification, or image upload flow.
 
-The cart is stored locally in the browser. The checkout page creates a local request preview only and does not submit data to a server. Admin pages use mock/local data and do not persist product or order changes.
+The cart is stored locally in the browser. Product browsing, checkout submission, and admin catalog/order pages can use the backend when it is running, with local preview fallbacks for development.
 
-Backend checkout requests support `pay_on_delivery` and `manual_lipa_payment`, but no online payment is processed and manual LIPA payments are not automatically verified. Admin checkout request endpoints are currently unprotected and must be secured with authentication and authorization before production.
+Backend checkout requests support `pay_on_delivery` and `manual_lipa_payment`, but no online payment is processed and manual LIPA payments are not automatically verified. Admin API endpoints require HttpOnly cookie-based admin authentication.
 
 Product prices are stored as `priceCents` plus `currency` and formatted in the UI. Cart items store a `productId`, `quantity`, and a local product snapshot for frontend-only display.
 
@@ -136,7 +136,14 @@ Development-only seed endpoint:
 POST /api/dev/seed
 ```
 
-`/api/dev/seed` is available only when the API runs in the Development environment. It inserts missing initial Luxora categories and products into MongoDB for local Swagger/API testing, and it does not overwrite existing records.
+`/api/dev/seed` is available only when the API runs in the Development environment. It inserts missing initial Luxora categories and products into MongoDB for local Swagger/API testing, and it does not overwrite existing records. It also creates one development-only admin account if missing:
+
+```text
+Email: admin@luxora.local
+Password: ChangeMe123!
+```
+
+These credentials are for local development only and must never be used in production.
 
 Before testing API-backed product or category data on `/products` and `/products/:id`, start MongoDB, run the backend, then call the seed endpoint once from Swagger or curl:
 
@@ -157,11 +164,21 @@ To test checkout request submission:
 
 The checkout form sends customer details, fulfillment preference, payment method, notes, and item `productId`/`quantity` pairs. It does not send the frontend subtotal as trusted data; the backend recalculates totals from MongoDB products. If the backend is unavailable, the page falls back to a local preview confirmation and clearly labels it as local-only.
 
-`/admin/orders` can read and update backend checkout requests when the API is running. It supports local preview fallback when the backend is unavailable, but backend admin endpoints remain unprotected and must not be used in production until authentication and authorization are added.
+`/admin/orders` can read and update backend checkout requests when the API is running. It supports local preview fallback when the backend is unavailable. Backend admin endpoints require an authenticated admin cookie.
 
-`/admin/products` and `/admin/categories` can read, create, update, and delete backend catalog records when the API is running. If the backend is unavailable, both pages show local preview data with mutation actions disabled. Admin catalog endpoints are still unprotected and must be secured before production.
+`/admin/products` and `/admin/categories` can read, create, update, and delete backend catalog records when the API is running. If the backend is unavailable, both pages show local preview data with mutation actions disabled.
 
-Unprotected admin endpoints for backend development only:
+Admin fallback data is read-only. Create, edit, delete, and status mutation actions are disabled whenever an admin page is showing local preview data instead of backend data.
+
+Admin auth endpoints:
+
+```text
+POST /api/auth/admin/login
+POST /api/auth/admin/logout
+GET /api/auth/admin/me
+```
+
+Admin endpoints require authentication:
 
 ```text
 GET /api/admin/products
@@ -180,7 +197,9 @@ PATCH /api/admin/checkout-requests/{id}/status
 PATCH /api/admin/checkout-requests/{id}/payment-status
 ```
 
-These admin API routes are intentionally temporary and unprotected for local backend development. They are not production-ready until admin authentication and authorization are added.
+Admin auth uses an HttpOnly cookie named `Luxora.AdminAuth`. Frontend API requests must include credentials; the built-in API client does this with `credentials: 'include'`. Do not store admin tokens in localStorage.
+
+Admin authorization is intentionally simple for now: one `Admin` role. Production still needs hardened account management, password rotation, lockout/rate limiting, deployment-specific cookie domain/SameSite review, and removal of development seed credentials.
 
 Swagger is enabled in development:
 
@@ -196,7 +215,8 @@ MongoDB is configured in [backend/Luxora.Api/appsettings.json](backend/Luxora.Ap
   "DatabaseName": "LuxoraDb",
   "ProductsCollectionName": "products",
   "CategoriesCollectionName": "categories",
-  "CheckoutRequestsCollectionName": "checkoutRequests"
+  "CheckoutRequestsCollectionName": "checkoutRequests",
+  "AdminUsersCollectionName": "adminUsers"
 }
 ```
 

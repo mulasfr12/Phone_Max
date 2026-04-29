@@ -2,4 +2,5 @@ namespace Luxora.Api.Data;
 
 public sealed record SeedResult(
     int CategoriesInserted,
-    int ProductsInserted);
+    int ProductsInserted,
+    int AdminUsersInserted);

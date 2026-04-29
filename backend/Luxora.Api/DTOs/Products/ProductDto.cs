@@ -14,4 +14,6 @@ public sealed record ProductDto(
     bool InStock,
     string StockStatus,
     string Visual,
-    string Tone);
+    string Tone,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt);

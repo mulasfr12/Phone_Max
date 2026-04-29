@@ -1,11 +1,13 @@
 using Luxora.Api.DTOs.Categories;
 using Luxora.Api.Services;
 using Luxora.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Luxora.Api.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Admin")]
 [Route("api/admin/categories")]
 public sealed class AdminCategoriesController : ControllerBase
 {

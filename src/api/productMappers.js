@@ -29,6 +29,8 @@ export function normalizeProduct(product) {
       product.tone ||
       fallbackToneByCategory[category] ||
       fallbackToneByCategory.Accessories,
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
   };
 }
 
@@ -42,6 +44,8 @@ export function normalizeCategory(category) {
     name: category.name,
     description: category.description ?? '',
     sortOrder: category.sortOrder ?? 0,
+    createdAt: category.createdAt,
+    updatedAt: category.updatedAt,
   };
 }
 

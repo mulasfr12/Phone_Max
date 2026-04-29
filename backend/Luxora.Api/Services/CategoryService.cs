@@ -136,6 +136,8 @@ public sealed class CategoryService : ICategoryService
             category.Id,
             category.Name,
             category.Description,
-            category.SortOrder);
+            category.SortOrder,
+            category.CreatedAt,
+            category.UpdatedAt);
     }
 }

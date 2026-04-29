@@ -1,10 +1,12 @@
 using Luxora.Api.DTOs.CheckoutRequests;
 using Luxora.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Luxora.Api.Controllers;
 
 [ApiController]
+[Authorize(Roles = "Admin")]
 [Route("api/admin/checkout-requests")]
 public sealed class AdminCheckoutRequestsController : ControllerBase
 {
