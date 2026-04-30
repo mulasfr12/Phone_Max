@@ -27,6 +27,9 @@ const AdminOrdersPage = lazy(() => import('./pages/admin/AdminOrdersPage.jsx'));
 const AdminCategoriesPage = lazy(
   () => import('./pages/admin/AdminCategoriesPage.jsx'),
 );
+const AdminChangePasswordPage = lazy(
+  () => import('./pages/admin/AdminChangePasswordPage.jsx'),
+);
 
 function PageFallback() {
   return (
@@ -83,6 +86,14 @@ export default function App() {
                 element={
                   <ProtectedAdminRoute>
                     <AdminCategoriesPage />
+                  </ProtectedAdminRoute>
+                }
+              />
+              <Route
+                path="/admin/change-password"
+                element={
+                  <ProtectedAdminRoute>
+                    <AdminChangePasswordPage />
                   </ProtectedAdminRoute>
                 }
               />

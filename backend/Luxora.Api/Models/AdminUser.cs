@@ -15,6 +15,14 @@ public sealed class AdminUser
 
     public string Role { get; set; } = "Admin";
 
+    public int FailedLoginAttempts { get; set; }
+
+    public DateTime? LockoutUntil { get; set; }
+
+    public DateTime? LastLoginAt { get; set; }
+
+    public DateTime? LastFailedLoginAt { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }

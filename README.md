@@ -47,6 +47,7 @@ Product prices are stored as `priceCents` plus `currency` and formatted in the U
 - `/admin/products` admin product list mockup
 - `/admin/orders` admin order request mockup
 - `/admin/categories` admin category mockup
+- `/admin/change-password` protected admin password form
 
 ## Getting Started
 
@@ -144,6 +145,7 @@ Password: ChangeMe123!
 ```
 
 These credentials are for local development only and must never be used in production.
+`ASPNETCORE_ENVIRONMENT` must not be set to `Development` in production; the development seed route returns 404 outside Development and the seed credentials are not production-safe.
 
 Before testing API-backed product or category data on `/products` and `/products/:id`, start MongoDB, run the backend, then call the seed endpoint once from Swagger or curl:
 
@@ -176,6 +178,8 @@ Admin auth endpoints:
 POST /api/auth/admin/login
 POST /api/auth/admin/logout
 GET /api/auth/admin/me
+GET /api/auth/admin/csrf
+POST /api/auth/admin/change-password
 ```
 
 Admin endpoints require authentication:
@@ -201,11 +205,15 @@ Admin auth uses an HttpOnly cookie named `Luxora.AdminAuth`. Frontend API reques
 
 Frontend admin routes are protected by `/admin/login`. On app load, the frontend calls `GET /api/auth/admin/me` to restore an existing admin session from the HttpOnly cookie. Login calls `POST /api/auth/admin/login`; logout calls `POST /api/auth/admin/logout`. The frontend does not store admin tokens in `localStorage` or `sessionStorage`.
 
-Admin mutating requests use double-submit CSRF protection. After login or session restore, the frontend calls `GET /api/auth/admin/csrf`, receives a CSRF token, and the API also sets a non-HttpOnly `Luxora.Csrf` cookie. Admin `POST`, `PUT`, `PATCH`, and `DELETE` requests under `/api/admin/*` send that value in the `X-CSRF-TOKEN` header. Public storefront endpoints and admin `GET` requests do not require the CSRF header.
+Admin mutating requests use double-submit CSRF protection. After login or session restore, the frontend calls `GET /api/auth/admin/csrf`, receives a CSRF token, and the API also sets a non-HttpOnly `Luxora.Csrf` cookie. Admin `POST`, `PUT`, `PATCH`, and `DELETE` requests under `/api/admin/*`, plus `POST /api/auth/admin/change-password`, send that value in the `X-CSRF-TOKEN` header. Public storefront endpoints and admin `GET` requests do not require the CSRF header.
 
-The admin cookie currently uses `SameSite=Lax`, which is practical for local same-site development with Vite and the API. Production deployments with frontend and backend on different sites may require `SameSite=None` and `Secure=true`; review cookie domain, HTTPS, and CORS credentials settings before launch.
+Admin login has a temporary lockout guard. The default development settings allow 5 failed attempts before a 15-minute lockout. Invalid credential responses remain generic and do not reveal whether an email exists.
 
-Admin authorization is intentionally simple for now: one `Admin` role. Production still needs hardened account management, password rotation, lockout/rate limiting, deployment-specific cookie domain/SameSite review, and removal of development seed credentials.
+Cookie, CORS, and lockout settings are config-driven. Local defaults allow only the Vite origins `http://localhost:5173` and `https://localhost:5173`, use `SameSite=Lax`, and use `SecurePolicy=SameAsRequest` in Development. Production must configure the exact frontend origin, require HTTPS, and never use wildcard origins with credentialed CORS. Split frontend/backend domains may require `SameSite=None` and `SecurePolicy=Always`.
+
+MongoDB indexes are initialized at API startup. Admin email has a unique index. Product and category ids use MongoDB `_id`, which is already unique, and additional browse/admin indexes are created for category, sorting, checkout status, payment status, and created date.
+
+Admin authorization is intentionally simple for now: one `Admin` role. Production still needs hardened account management, password rotation policy, deployment-specific cookie domain/SameSite review, and removal of development seed credentials.
 
 Swagger is enabled in development:
 
@@ -223,6 +231,27 @@ MongoDB is configured in [backend/Luxora.Api/appsettings.json](backend/Luxora.Ap
   "CategoriesCollectionName": "categories",
   "CheckoutRequestsCollectionName": "checkoutRequests",
   "AdminUsersCollectionName": "adminUsers"
+}
+```
+
+Security-related local defaults are also configured in `appsettings.json` and `appsettings.Development.json`:
+
+```json
+"Auth": {
+  "AdminCookieName": "Luxora.AdminAuth",
+  "CsrfCookieName": "Luxora.Csrf",
+  "MaxFailedLoginAttempts": 5,
+  "LockoutMinutes": 15
+},
+"Frontend": {
+  "AllowedOrigins": [
+    "http://localhost:5173",
+    "https://localhost:5173"
+  ]
+},
+"Cookie": {
+  "SameSite": "Lax",
+  "SecurePolicy": "Always"
 }
 ```
 

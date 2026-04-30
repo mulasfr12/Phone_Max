@@ -12,4 +12,9 @@ public interface IAdminAuthService
     Task<AdminMeResponseDto?> GetCurrentAdminAsync(
         ClaimsPrincipal user,
         CancellationToken cancellationToken);
+
+    Task<ServiceResult<string>> ChangePasswordAsync(
+        ClaimsPrincipal user,
+        ChangeAdminPasswordRequestDto request,
+        CancellationToken cancellationToken);
 }

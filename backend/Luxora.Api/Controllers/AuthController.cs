@@ -1,10 +1,13 @@
 using Luxora.Api.DTOs.Auth;
+using Luxora.Api.Helpers;
 using Luxora.Api.Security;
 using Luxora.Api.Services.Interfaces;
+using Luxora.Api.Settings;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Security.Claims;
 
 namespace Luxora.Api.Controllers;
@@ -15,13 +18,19 @@ public sealed class AuthController : ControllerBase
 {
     private readonly IAdminAuthService _adminAuthService;
     private readonly IWebHostEnvironment _environment;
+    private readonly AuthSettings _authSettings;
+    private readonly LuxoraCookieSettings _cookieSettings;
 
     public AuthController(
         IAdminAuthService adminAuthService,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        IOptions<AuthSettings> authOptions,
+        IOptions<LuxoraCookieSettings> cookieOptions)
     {
         _adminAuthService = adminAuthService;
         _environment = environment;
+        _authSettings = authOptions.Value;
+        _cookieSettings = cookieOptions.Value;
     }
 
     [HttpPost("login")]
@@ -36,7 +45,7 @@ public sealed class AuthController : ControllerBase
 
         if (!result.IsSuccess)
         {
-            if (result.Errors.Contains("Invalid admin email or password."))
+            if (IsAuthenticationFailure(result.Errors))
             {
                 return Unauthorized(new { errors = result.Errors });
             }
@@ -78,13 +87,16 @@ public sealed class AuthController : ControllerBase
         var csrfToken = CsrfTokenHelper.GenerateToken();
 
         Response.Cookies.Append(
-            CsrfTokenHelper.CookieName,
+            _authSettings.CsrfCookieName,
             csrfToken,
             new CookieOptions
             {
                 HttpOnly = false,
-                SameSite = SameSiteMode.Lax,
-                Secure = !_environment.IsDevelopment(),
+                SameSite = CookieSettingsHelper.ParseSameSite(_cookieSettings.SameSite),
+                Secure = CookieSettingsHelper.ShouldUseSecureCookie(
+                    _cookieSettings.SecurePolicy,
+                    Request,
+                    _environment),
                 Path = "/"
             });
 
@@ -98,9 +110,36 @@ public sealed class AuthController : ControllerBase
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         Response.Cookies.Delete(
-            CsrfTokenHelper.CookieName,
+            _authSettings.CsrfCookieName,
             new CookieOptions { Path = "/" });
         return NoContent();
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("change-password")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ChangePassword(
+        ChangeAdminPasswordRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _adminAuthService.ChangePasswordAsync(
+            User,
+            request,
+            cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Ok(new { message = result.Value });
+        }
+
+        if (result.IsNotFound)
+        {
+            return Unauthorized(new { errors = result.Errors });
+        }
+
+        return BadRequest(new { errors = result.Errors });
     }
 
     [Authorize(Roles = "Admin")]
@@ -120,5 +159,11 @@ public sealed class AuthController : ControllerBase
         }
 
         return Ok(admin);
+    }
+
+    private static bool IsAuthenticationFailure(IReadOnlyList<string> errors)
+    {
+        return errors.Contains("Invalid admin email or password.")
+            || errors.Contains("Admin account is temporarily locked. Try again later.");
     }
 }

@@ -1,4 +1,6 @@
 using Luxora.Api.Security;
+using Luxora.Api.Settings;
+using Microsoft.Extensions.Options;
 
 namespace Luxora.Api.Middleware;
 
@@ -13,10 +15,14 @@ public sealed class AdminCsrfMiddleware
     };
 
     private readonly RequestDelegate _next;
+    private readonly AuthSettings _authSettings;
 
-    public AdminCsrfMiddleware(RequestDelegate next)
+    public AdminCsrfMiddleware(
+        RequestDelegate next,
+        IOptions<AuthSettings> authOptions)
     {
         _next = next;
+        _authSettings = authOptions.Value;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -27,7 +33,7 @@ public sealed class AdminCsrfMiddleware
             return;
         }
 
-        var cookieToken = context.Request.Cookies[CsrfTokenHelper.CookieName];
+        var cookieToken = context.Request.Cookies[_authSettings.CsrfCookieName];
         var headerToken = context.Request.Headers[CsrfTokenHelper.HeaderName].FirstOrDefault();
 
         if (string.IsNullOrWhiteSpace(cookieToken)
@@ -47,7 +53,13 @@ public sealed class AdminCsrfMiddleware
 
     private static bool RequiresCsrfValidation(HttpRequest request)
     {
-        return request.Path.StartsWithSegments("/api/admin", StringComparison.OrdinalIgnoreCase)
+        var isProtectedAdminPath =
+            request.Path.StartsWithSegments("/api/admin", StringComparison.OrdinalIgnoreCase)
+            || request.Path.Equals(
+                "/api/auth/admin/change-password",
+                StringComparison.OrdinalIgnoreCase);
+
+        return isProtectedAdminPath
             && ProtectedMethods.Contains(request.Method);
     }
 }

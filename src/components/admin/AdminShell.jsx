@@ -7,6 +7,7 @@ const adminLinks = [
   { label: 'Products', to: '/admin/products' },
   { label: 'Orders', to: '/admin/orders' },
   { label: 'Categories', to: '/admin/categories' },
+  { label: 'Password', to: '/admin/change-password' },
 ];
 
 export default function AdminShell({ eyebrow, title, description, children }) {

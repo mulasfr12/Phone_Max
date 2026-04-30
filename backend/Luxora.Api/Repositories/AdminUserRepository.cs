@@ -53,4 +53,58 @@ public sealed class AdminUserRepository : IAdminUserRepository
             .Find(adminUser => adminUser.Email == normalizedEmail)
             .AnyAsync(cancellationToken);
     }
+
+    public async Task RecordFailedLoginAsync(
+        string id,
+        int failedLoginAttempts,
+        DateTime? lockoutUntil,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var update = Builders<AdminUser>.Update
+            .Set(adminUser => adminUser.FailedLoginAttempts, failedLoginAttempts)
+            .Set(adminUser => adminUser.LockoutUntil, lockoutUntil)
+            .Set(adminUser => adminUser.LastFailedLoginAt, now)
+            .Set(adminUser => adminUser.UpdatedAt, now);
+
+        await _context.AdminUsers.UpdateOneAsync(
+            adminUser => adminUser.Id == id,
+            update,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task RecordSuccessfulLoginAsync(
+        string id,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var update = Builders<AdminUser>.Update
+            .Set(adminUser => adminUser.FailedLoginAttempts, 0)
+            .Set(adminUser => adminUser.LockoutUntil, null)
+            .Set(adminUser => adminUser.LastLoginAt, now)
+            .Set(adminUser => adminUser.UpdatedAt, now);
+
+        await _context.AdminUsers.UpdateOneAsync(
+            adminUser => adminUser.Id == id,
+            update,
+            cancellationToken: cancellationToken);
+    }
+
+    public async Task UpdatePasswordAsync(
+        string id,
+        string passwordHash,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var update = Builders<AdminUser>.Update
+            .Set(adminUser => adminUser.PasswordHash, passwordHash)
+            .Set(adminUser => adminUser.FailedLoginAttempts, 0)
+            .Set(adminUser => adminUser.LockoutUntil, null)
+            .Set(adminUser => adminUser.UpdatedAt, now);
+
+        await _context.AdminUsers.UpdateOneAsync(
+            adminUser => adminUser.Id == id,
+            update,
+            cancellationToken: cancellationToken);
+    }
 }

@@ -1,4 +1,5 @@
 using Luxora.Api.Data;
+using Luxora.Api.Helpers;
 using Luxora.Api.Middleware;
 using Luxora.Api.Repositories;
 using Luxora.Api.Repositories.Interfaces;
@@ -9,15 +10,21 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 
 const string ViteCorsPolicy = "ViteCorsPolicy";
-const string AdminAuthCookieName = "Luxora.AdminAuth";
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MongoDbSettings>(
     builder.Configuration.GetSection(MongoDbSettings.SectionName));
+builder.Services.Configure<AuthSettings>(
+    builder.Configuration.GetSection(AuthSettings.SectionName));
+builder.Services.Configure<FrontendSettings>(
+    builder.Configuration.GetSection(FrontendSettings.SectionName));
+builder.Services.Configure<LuxoraCookieSettings>(
+    builder.Configuration.GetSection(LuxoraCookieSettings.SectionName));
 
 builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddScoped<DatabaseSeeder>();
+builder.Services.AddScoped<MongoIndexInitializer>();
 
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
@@ -34,14 +41,19 @@ builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.Cookie.Name = AdminAuthCookieName;
+        var authSettings = builder.Configuration
+            .GetSection(AuthSettings.SectionName)
+            .Get<AuthSettings>() ?? new AuthSettings();
+        var cookieSettings = builder.Configuration
+            .GetSection(LuxoraCookieSettings.SectionName)
+            .Get<LuxoraCookieSettings>() ?? new LuxoraCookieSettings();
+
+        options.Cookie.Name = authSettings.AdminCookieName;
         options.Cookie.HttpOnly = true;
-        // Lax keeps local Vite/API development simple. If production uses
-        // different frontend/backend sites, review SameSite=None + Secure.
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
-            ? CookieSecurePolicy.SameAsRequest
-            : CookieSecurePolicy.Always;
+        options.Cookie.SameSite = CookieSettingsHelper.ParseSameSite(
+            cookieSettings.SameSite);
+        options.Cookie.SecurePolicy = CookieSettingsHelper.ParseSecurePolicy(
+            cookieSettings.SecurePolicy);
         options.SlidingExpiration = true;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.Events = new CookieAuthenticationEvents
@@ -65,8 +77,12 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy(ViteCorsPolicy, policy =>
     {
+        var frontendSettings = builder.Configuration
+            .GetSection(FrontendSettings.SectionName)
+            .Get<FrontendSettings>() ?? new FrontendSettings();
+
         policy
-            .WithOrigins("http://localhost:5173", "https://localhost:5173")
+            .WithOrigins(frontendSettings.AllowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -91,5 +107,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<AdminCsrfMiddleware>();
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var indexInitializer = scope.ServiceProvider
+        .GetRequiredService<MongoIndexInitializer>();
+    await indexInitializer.InitializeAsync(CancellationToken.None);
+}
 
 app.Run();

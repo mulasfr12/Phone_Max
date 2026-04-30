@@ -16,9 +16,16 @@ export function getAdminCsrfToken() {
   return apiGet('/auth/admin/csrf');
 }
 
+export function changeAdminPassword(payload, csrfToken) {
+  return apiPost('/auth/admin/change-password', payload, {
+    headers: { 'X-CSRF-TOKEN': csrfToken },
+  });
+}
+
 export const adminAuthApi = {
   loginAdmin,
   logoutAdmin,
   getCurrentAdmin,
   getAdminCsrfToken,
+  changeAdminPassword,
 };
