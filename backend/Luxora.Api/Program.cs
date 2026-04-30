@@ -1,4 +1,5 @@
 using Luxora.Api.Data;
+using Luxora.Api.Middleware;
 using Luxora.Api.Repositories;
 using Luxora.Api.Repositories.Interfaces;
 using Luxora.Api.Services;
@@ -88,6 +89,7 @@ app.UseHttpsRedirection();
 app.UseCors(ViteCorsPolicy);
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<AdminCsrfMiddleware>();
 app.MapControllers();
 
 app.Run();

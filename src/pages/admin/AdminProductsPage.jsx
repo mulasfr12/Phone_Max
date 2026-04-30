@@ -11,6 +11,7 @@ import {
 import { normalizeProducts } from '../../api/productMappers.js';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
+import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 import { products as localProducts } from '../../data/products.js';
 import { formatPrice } from '../../utils/money.js';
 
@@ -135,6 +136,7 @@ function formToPayload(formData) {
 }
 
 export default function AdminProductsPage() {
+  const { csrfToken } = useAdminAuth();
   const [products, setProducts] = useState([]);
   const [status, setStatus] = useState({
     isLoading: true,
@@ -228,8 +230,8 @@ export default function AdminProductsPage() {
 
     try {
       const savedProduct = editingProduct
-        ? await updateAdminProduct(editingProduct.id, payload)
-        : await createAdminProduct(payload);
+        ? await updateAdminProduct(editingProduct.id, payload, csrfToken)
+        : await createAdminProduct(payload, csrfToken);
       const normalizedProduct = normalizeProducts([savedProduct])[0];
 
       setProducts((currentProducts) => {
@@ -267,7 +269,7 @@ export default function AdminProductsPage() {
     }));
 
     try {
-      await deleteAdminProduct(product.id);
+      await deleteAdminProduct(product.id, csrfToken);
       setProducts((currentProducts) =>
         currentProducts.filter((item) => item.id !== product.id),
       );

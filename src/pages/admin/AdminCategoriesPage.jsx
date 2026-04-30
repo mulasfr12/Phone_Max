@@ -10,6 +10,7 @@ import {
 import { getAdminProducts } from '../../api/adminProductsApi.js';
 import { normalizeCategories, normalizeProducts } from '../../api/productMappers.js';
 import AdminShell from '../../components/admin/AdminShell.jsx';
+import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 import { categories as localCategories } from '../../data/homeData.js';
 import { products as localProducts } from '../../data/products.js';
 
@@ -61,6 +62,7 @@ function formatDate(value, fallbackLabel) {
 }
 
 export default function AdminCategoriesPage() {
+  const { csrfToken } = useAdminAuth();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [status, setStatus] = useState({
@@ -177,8 +179,8 @@ export default function AdminCategoriesPage() {
 
     try {
       const savedCategory = editingCategory
-        ? await updateAdminCategory(editingCategory.id, payload)
-        : await createAdminCategory(payload);
+        ? await updateAdminCategory(editingCategory.id, payload, csrfToken)
+        : await createAdminCategory(payload, csrfToken);
       const normalizedCategory = normalizeCategories([savedCategory])[0];
 
       setCategories((currentCategories) => {
@@ -216,7 +218,7 @@ export default function AdminCategoriesPage() {
     }));
 
     try {
-      await deleteAdminCategory(category.id);
+      await deleteAdminCategory(category.id, csrfToken);
       setCategories((currentCategories) =>
         currentCategories.filter((item) => item.id !== category.id),
       );

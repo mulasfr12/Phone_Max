@@ -79,18 +79,18 @@ export function apiGet(path, query) {
   return apiRequest(path, { method: 'GET', query });
 }
 
-export function apiPost(path, body) {
-  return apiRequest(path, { method: 'POST', body });
+export function apiPost(path, body, options = {}) {
+  return apiRequest(path, { method: 'POST', body, ...options });
 }
 
-export function apiPatch(path, body) {
-  return apiRequest(path, { method: 'PATCH', body });
+export function apiPatch(path, body, options = {}) {
+  return apiRequest(path, { method: 'PATCH', body, ...options });
 }
 
-export function apiPut(path, body) {
-  return apiRequest(path, { method: 'PUT', body });
+export function apiPut(path, body, options = {}) {
+  return apiRequest(path, { method: 'PUT', body, ...options });
 }
 
-export function apiDelete(path) {
-  return apiRequest(path, { method: 'DELETE' });
+export function apiDelete(path, options = {}) {
+  return apiRequest(path, { method: 'DELETE', ...options });
 }

@@ -1,4 +1,5 @@
 using Luxora.Api.DTOs.Auth;
+using Luxora.Api.Security;
 using Luxora.Api.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -13,10 +14,14 @@ namespace Luxora.Api.Controllers;
 public sealed class AuthController : ControllerBase
 {
     private readonly IAdminAuthService _adminAuthService;
+    private readonly IWebHostEnvironment _environment;
 
-    public AuthController(IAdminAuthService adminAuthService)
+    public AuthController(
+        IAdminAuthService adminAuthService,
+        IWebHostEnvironment environment)
     {
         _adminAuthService = adminAuthService;
+        _environment = environment;
     }
 
     [HttpPost("login")]
@@ -66,11 +71,35 @@ public sealed class AuthController : ControllerBase
     }
 
     [Authorize(Roles = "Admin")]
+    [HttpGet("csrf")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult<object> GetCsrfToken()
+    {
+        var csrfToken = CsrfTokenHelper.GenerateToken();
+
+        Response.Cookies.Append(
+            CsrfTokenHelper.CookieName,
+            csrfToken,
+            new CookieOptions
+            {
+                HttpOnly = false,
+                SameSite = SameSiteMode.Lax,
+                Secure = !_environment.IsDevelopment(),
+                Path = "/"
+            });
+
+        return Ok(new { csrfToken });
+    }
+
+    [Authorize(Roles = "Admin")]
     [HttpPost("logout")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        Response.Cookies.Delete(
+            CsrfTokenHelper.CookieName,
+            new CookieOptions { Path = "/" });
         return NoContent();
     }
 

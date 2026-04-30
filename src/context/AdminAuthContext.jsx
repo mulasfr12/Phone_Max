@@ -9,6 +9,7 @@ import {
 
 import { ApiError } from '../api/apiClient.js';
 import {
+  getAdminCsrfToken,
   getCurrentAdmin,
   loginAdmin,
   logoutAdmin,
@@ -32,8 +33,15 @@ function getErrorMessage(error) {
 
 export function AdminAuthProvider({ children }) {
   const [admin, setAdmin] = useState(null);
+  const [csrfToken, setCsrfToken] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
+
+  const refreshCsrfToken = useCallback(async () => {
+    const response = await getAdminCsrfToken();
+    setCsrfToken(response.csrfToken);
+    return response.csrfToken;
+  }, []);
 
   const refreshAdmin = useCallback(async () => {
     setIsLoading(true);
@@ -41,9 +49,11 @@ export function AdminAuthProvider({ children }) {
 
     try {
       const currentAdmin = await getCurrentAdmin();
+      await refreshCsrfToken();
       setAdmin(currentAdmin);
     } catch (error) {
       setAdmin(null);
+      setCsrfToken(null);
 
       if (!(error instanceof ApiError && error.status === 401)) {
         setAuthError(getErrorMessage(error));
@@ -51,7 +61,7 @@ export function AdminAuthProvider({ children }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [refreshCsrfToken]);
 
   useEffect(() => {
     refreshAdmin();
@@ -63,17 +73,19 @@ export function AdminAuthProvider({ children }) {
 
     try {
       const response = await loginAdmin({ email, password });
+      await refreshCsrfToken();
       setAdmin(response.admin);
       return response.admin;
     } catch (error) {
       setAdmin(null);
+      setCsrfToken(null);
       const message = getErrorMessage(error);
       setAuthError(message);
       throw new Error(message);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [refreshCsrfToken]);
 
   const logout = useCallback(async () => {
     setIsLoading(true);
@@ -85,6 +97,7 @@ export function AdminAuthProvider({ children }) {
       // The local admin state should still be cleared if the session is gone.
     } finally {
       setAdmin(null);
+      setCsrfToken(null);
       setIsLoading(false);
     }
   }, []);
@@ -92,14 +105,25 @@ export function AdminAuthProvider({ children }) {
   const value = useMemo(
     () => ({
       admin,
+      csrfToken,
       isLoading,
       authError,
       isAuthenticated: Boolean(admin),
       login,
       logout,
       refreshAdmin,
+      refreshCsrfToken,
     }),
-    [admin, authError, isLoading, login, logout, refreshAdmin],
+    [
+      admin,
+      authError,
+      csrfToken,
+      isLoading,
+      login,
+      logout,
+      refreshAdmin,
+      refreshCsrfToken,
+    ],
   );
 
   return (

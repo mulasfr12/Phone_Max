@@ -8,16 +8,27 @@ export function getAdminCategoryById(id) {
   return apiGet(`/admin/categories/${encodeURIComponent(id)}`);
 }
 
-export function createAdminCategory(payload) {
-  return apiPost('/admin/categories', payload);
+function csrfHeaders(csrfToken) {
+  return { headers: { 'X-CSRF-TOKEN': csrfToken } };
 }
 
-export function updateAdminCategory(id, payload) {
-  return apiPut(`/admin/categories/${encodeURIComponent(id)}`, payload);
+export function createAdminCategory(payload, csrfToken) {
+  return apiPost('/admin/categories', payload, csrfHeaders(csrfToken));
 }
 
-export function deleteAdminCategory(id) {
-  return apiDelete(`/admin/categories/${encodeURIComponent(id)}`);
+export function updateAdminCategory(id, payload, csrfToken) {
+  return apiPut(
+    `/admin/categories/${encodeURIComponent(id)}`,
+    payload,
+    csrfHeaders(csrfToken),
+  );
+}
+
+export function deleteAdminCategory(id, csrfToken) {
+  return apiDelete(
+    `/admin/categories/${encodeURIComponent(id)}`,
+    csrfHeaders(csrfToken),
+  );
 }
 
 export const adminCategoriesApi = {

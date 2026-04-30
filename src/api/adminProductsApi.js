@@ -8,16 +8,27 @@ export function getAdminProductById(id) {
   return apiGet(`/admin/products/${encodeURIComponent(id)}`);
 }
 
-export function createAdminProduct(payload) {
-  return apiPost('/admin/products', payload);
+function csrfHeaders(csrfToken) {
+  return { headers: { 'X-CSRF-TOKEN': csrfToken } };
 }
 
-export function updateAdminProduct(id, payload) {
-  return apiPut(`/admin/products/${encodeURIComponent(id)}`, payload);
+export function createAdminProduct(payload, csrfToken) {
+  return apiPost('/admin/products', payload, csrfHeaders(csrfToken));
 }
 
-export function deleteAdminProduct(id) {
-  return apiDelete(`/admin/products/${encodeURIComponent(id)}`);
+export function updateAdminProduct(id, payload, csrfToken) {
+  return apiPut(
+    `/admin/products/${encodeURIComponent(id)}`,
+    payload,
+    csrfHeaders(csrfToken),
+  );
+}
+
+export function deleteAdminProduct(id, csrfToken) {
+  return apiDelete(
+    `/admin/products/${encodeURIComponent(id)}`,
+    csrfHeaders(csrfToken),
+  );
 }
 
 export const adminProductsApi = {

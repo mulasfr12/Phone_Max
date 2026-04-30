@@ -12,8 +12,13 @@ export function getCurrentAdmin() {
   return apiGet('/auth/admin/me');
 }
 
+export function getAdminCsrfToken() {
+  return apiGet('/auth/admin/csrf');
+}
+
 export const adminAuthApi = {
   loginAdmin,
   logoutAdmin,
   getCurrentAdmin,
+  getAdminCsrfToken,
 };

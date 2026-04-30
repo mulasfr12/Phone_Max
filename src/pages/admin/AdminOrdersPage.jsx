@@ -8,6 +8,7 @@ import {
 } from '../../api/adminCheckoutRequestsApi.js';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
+import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 import { mockOrderRequests } from '../../data/adminData.js';
 import { formatPrice } from '../../utils/money.js';
 
@@ -74,6 +75,7 @@ const orderColumns = [
 ];
 
 export default function AdminOrdersPage() {
+  const { csrfToken } = useAdminAuth();
   const [orders, setOrders] = useState([]);
   const [filters, setFilters] = useState({
     status: '',
@@ -187,7 +189,11 @@ export default function AdminOrdersPage() {
     }));
 
     try {
-      const updatedOrder = await updateCheckoutRequestStatus(orderId, nextStatus);
+      const updatedOrder = await updateCheckoutRequestStatus(
+        orderId,
+        nextStatus,
+        csrfToken,
+      );
       replaceUpdatedOrder(updatedOrder);
       setStatus((currentStatus) => ({
         ...currentStatus,
@@ -212,6 +218,7 @@ export default function AdminOrdersPage() {
       const updatedOrder = await updateCheckoutPaymentStatus(
         orderId,
         nextPaymentStatus,
+        csrfToken,
       );
       replaceUpdatedOrder(updatedOrder);
       setStatus((currentStatus) => ({

@@ -201,6 +201,8 @@ Admin auth uses an HttpOnly cookie named `Luxora.AdminAuth`. Frontend API reques
 
 Frontend admin routes are protected by `/admin/login`. On app load, the frontend calls `GET /api/auth/admin/me` to restore an existing admin session from the HttpOnly cookie. Login calls `POST /api/auth/admin/login`; logout calls `POST /api/auth/admin/logout`. The frontend does not store admin tokens in `localStorage` or `sessionStorage`.
 
+Admin mutating requests use double-submit CSRF protection. After login or session restore, the frontend calls `GET /api/auth/admin/csrf`, receives a CSRF token, and the API also sets a non-HttpOnly `Luxora.Csrf` cookie. Admin `POST`, `PUT`, `PATCH`, and `DELETE` requests under `/api/admin/*` send that value in the `X-CSRF-TOKEN` header. Public storefront endpoints and admin `GET` requests do not require the CSRF header.
+
 The admin cookie currently uses `SameSite=Lax`, which is practical for local same-site development with Vite and the API. Production deployments with frontend and backend on different sites may require `SameSite=None` and `Secure=true`; review cookie domain, HTTPS, and CORS credentials settings before launch.
 
 Admin authorization is intentionally simple for now: one `Admin` role. Production still needs hardened account management, password rotation, lockout/rate limiting, deployment-specific cookie domain/SameSite review, and removal of development seed credentials.

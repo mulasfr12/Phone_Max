@@ -8,16 +8,21 @@ export function getAdminCheckoutRequestById(id) {
   return apiGet(`/admin/checkout-requests/${encodeURIComponent(id)}`);
 }
 
-export function updateCheckoutRequestStatus(id, status) {
-  return apiPatch(`/admin/checkout-requests/${encodeURIComponent(id)}/status`, {
-    status,
-  });
+function csrfHeaders(csrfToken) {
+  return { headers: { 'X-CSRF-TOKEN': csrfToken } };
 }
 
-export function updateCheckoutPaymentStatus(id, paymentStatus) {
+export function updateCheckoutRequestStatus(id, status, csrfToken) {
+  return apiPatch(`/admin/checkout-requests/${encodeURIComponent(id)}/status`, {
+    status,
+  }, csrfHeaders(csrfToken));
+}
+
+export function updateCheckoutPaymentStatus(id, paymentStatus, csrfToken) {
   return apiPatch(
     `/admin/checkout-requests/${encodeURIComponent(id)}/payment-status`,
     { paymentStatus },
+    csrfHeaders(csrfToken),
   );
 }
 
