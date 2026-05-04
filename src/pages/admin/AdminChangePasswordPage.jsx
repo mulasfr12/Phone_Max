@@ -1,8 +1,13 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { changeAdminPassword } from '../../api/adminAuthApi.js';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
+import {
+  adminSecurityTokenNotReadyMessage,
+  getAdminMutationErrorMessage,
+} from '../../utils/adminSecurity.js';
 
 const inputClassName =
   'mt-2 min-h-12 w-full rounded-lg border border-zinc-200 bg-white px-4 text-sm text-zinc-950 outline-none transition placeholder:text-zinc-400 focus:border-zinc-500 focus:ring-2 focus:ring-zinc-950/10';
@@ -22,7 +27,8 @@ function getErrorMessage(error) {
 }
 
 export default function AdminChangePasswordPage() {
-  const { csrfToken } = useAdminAuth();
+  const navigate = useNavigate();
+  const { csrfToken, logout } = useAdminAuth();
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -38,6 +44,7 @@ export default function AdminChangePasswordPage() {
     formData.currentPassword &&
     formData.newPassword &&
     formData.confirmNewPassword &&
+    csrfToken &&
     !status.isSubmitting;
 
   function handleChange(event) {
@@ -55,24 +62,36 @@ export default function AdminChangePasswordPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    if (!csrfToken) {
+      setStatus({
+        isSubmitting: false,
+        error: adminSecurityTokenNotReadyMessage,
+        success: null,
+      });
+      return;
+    }
+
     setStatus({ isSubmitting: true, error: null, success: null });
 
     try {
       await changeAdminPassword(formData, csrfToken);
-      setFormData({
-        currentPassword: '',
-        newPassword: '',
-        confirmNewPassword: '',
-      });
       setStatus({
-        isSubmitting: false,
+        isSubmitting: true,
         error: null,
-        success: 'Password changed. Use the new password next time you sign in.',
+        success: 'Password updated. Please sign in again.',
+      });
+      await logout();
+      navigate('/admin/login', {
+        replace: true,
+        state: { message: 'Password updated. Please sign in again.' },
       });
     } catch (error) {
       setStatus({
         isSubmitting: false,
-        error: getErrorMessage(error),
+        error: getAdminMutationErrorMessage(
+          error,
+          getErrorMessage(error),
+        ),
         success: null,
       });
     }
@@ -90,6 +109,13 @@ export default function AdminChangePasswordPage() {
             Passwords are sent only to the API over the active admin session and
             are never stored in localStorage or sessionStorage.
           </div>
+
+          {!csrfToken && (
+            <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+              <p className="font-semibold">Admin security token is not ready.</p>
+              <p className="mt-1">{adminSecurityTokenNotReadyMessage}</p>
+            </div>
+          )}
 
           {status.error && (
             <div

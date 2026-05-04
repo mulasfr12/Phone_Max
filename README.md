@@ -115,6 +115,8 @@ dotnet run --project backend/Luxora.Api/Luxora.Api.csproj
 
 The frontend API client expects the backend to be running at `VITE_API_BASE_URL`. If your ASP.NET app uses a different local port, update `.env` and restart Vite.
 
+MongoDB must be reachable when the backend starts because Mongo indexes are initialized during API startup. Existing duplicate admin emails can cause index initialization to fail. This is intentional for local/development consistency; deployment should check MongoDB availability and index health before promoting a release.
+
 Health endpoint:
 
 ```text

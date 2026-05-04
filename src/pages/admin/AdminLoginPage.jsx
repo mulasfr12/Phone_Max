@@ -10,6 +10,7 @@ export default function AdminLoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { authError, isAuthenticated, isLoading, login } = useAdminAuth();
+  const successMessage = location.state?.message;
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -80,6 +81,15 @@ export default function AdminLoginPage() {
               role="alert"
             >
               {submitError || authError}
+            </div>
+          )}
+
+          {successMessage && !submitError && !authError && (
+            <div
+              className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900"
+              role="status"
+            >
+              {successMessage}
             </div>
           )}
 

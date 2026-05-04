@@ -10,6 +10,10 @@ import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 import { mockOrderRequests } from '../../data/adminData.js';
+import {
+  adminSecurityTokenNotReadyMessage,
+  getAdminMutationErrorMessage,
+} from '../../utils/adminSecurity.js';
 import { formatPrice } from '../../utils/money.js';
 
 const formatAdminLabel = (value) => String(value || '').replaceAll('_', ' ');
@@ -164,6 +168,8 @@ export default function AdminOrdersPage() {
       );
     });
   }, [filters, orders, status.isPreview]);
+  const isSecurityTokenReady = Boolean(csrfToken);
+  const areMutationsDisabled = status.isPreview || !isSecurityTokenReady;
 
   function handleFilterChange(event) {
     const { name, value } = event.target;
@@ -183,6 +189,14 @@ export default function AdminOrdersPage() {
   }
 
   async function handleStatusUpdate(orderId, nextStatus) {
+    if (!csrfToken) {
+      setStatus((currentStatus) => ({
+        ...currentStatus,
+        actionMessage: adminSecurityTokenNotReadyMessage,
+      }));
+      return;
+    }
+
     setStatus((currentStatus) => ({
       ...currentStatus,
       actionMessage: `Updating ${orderId}...`,
@@ -202,13 +216,23 @@ export default function AdminOrdersPage() {
     } catch (error) {
       setStatus((currentStatus) => ({
         ...currentStatus,
-        actionMessage:
-          error.message || `Could not update request ${orderId}.`,
+        actionMessage: getAdminMutationErrorMessage(
+          error,
+          `Could not update request ${orderId}.`,
+        ),
       }));
     }
   }
 
   async function handlePaymentStatusUpdate(orderId, nextPaymentStatus) {
+    if (!csrfToken) {
+      setStatus((currentStatus) => ({
+        ...currentStatus,
+        actionMessage: adminSecurityTokenNotReadyMessage,
+      }));
+      return;
+    }
+
     setStatus((currentStatus) => ({
       ...currentStatus,
       actionMessage: `Updating payment for ${orderId}...`,
@@ -230,8 +254,10 @@ export default function AdminOrdersPage() {
     } catch (error) {
       setStatus((currentStatus) => ({
         ...currentStatus,
-        actionMessage:
-          error.message || `Could not update payment for ${orderId}.`,
+        actionMessage: getAdminMutationErrorMessage(
+          error,
+          `Could not update payment for ${orderId}.`,
+        ),
       }));
     }
   }
@@ -243,8 +269,8 @@ export default function AdminOrdersPage() {
       description="Review backend checkout requests when the API is running, with local preview data as a development fallback."
     >
       <div className="mb-4 rounded-lg border border-zinc-200 bg-white p-4 text-sm leading-6 text-zinc-600 shadow-sm shadow-zinc-950/5">
-        Admin request endpoints are connected for local development, but they
-        are still unprotected and not production-ready until auth is added.
+        Admin request endpoints are protected by admin auth and CSRF. Status
+        actions stay disabled until the current security token is ready.
       </div>
 
       <div className="mb-4 grid gap-3 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-950/5 sm:grid-cols-3">
@@ -284,6 +310,13 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
+      {!status.isLoading && !status.isPreview && !isSecurityTokenReady && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+          <p className="font-semibold">Admin security token is not ready.</p>
+          <p className="mt-1">{adminSecurityTokenNotReadyMessage}</p>
+        </div>
+      )}
+
       {!status.isLoading && status.error && !status.isPreview && (
         <div className="mb-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800">
           <p className="font-semibold">Could not load backend requests.</p>
@@ -304,7 +337,8 @@ export default function AdminOrdersPage() {
         renderActions={(order) => (
           <OrderActions
             order={order}
-            disabled={status.isPreview}
+            disabled={areMutationsDisabled}
+            isSecurityTokenReady={isSecurityTokenReady}
             onStatusUpdate={handleStatusUpdate}
             onPaymentStatusUpdate={handlePaymentStatusUpdate}
           />
@@ -343,6 +377,7 @@ function FilterSelect({ label, name, value, options, onChange }) {
 function OrderActions({
   order,
   disabled,
+  isSecurityTokenReady,
   onStatusUpdate,
   onPaymentStatusUpdate,
 }) {
@@ -353,7 +388,9 @@ function OrderActions({
     <div className="flex min-w-72 flex-col gap-3">
       {disabled && (
         <p className="text-xs leading-5 text-zinc-500">
-          Preview data only. Actions are disabled.
+          {isSecurityTokenReady
+            ? 'Preview data only. Actions are disabled.'
+            : 'Security token is loading. Actions are disabled.'}
         </p>
       )}
       <div className="flex flex-wrap gap-2">

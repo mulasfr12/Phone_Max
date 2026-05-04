@@ -13,6 +13,10 @@ import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
 import { products as localProducts } from '../../data/products.js';
+import {
+  adminSecurityTokenNotReadyMessage,
+  getAdminMutationErrorMessage,
+} from '../../utils/adminSecurity.js';
 import { formatPrice } from '../../utils/money.js';
 
 const emptyProductForm = {
@@ -200,6 +204,8 @@ export default function AdminProductsPage() {
     () => [...products].sort((a, b) => a.name.localeCompare(b.name)),
     [products],
   );
+  const isSecurityTokenReady = Boolean(csrfToken);
+  const areMutationsDisabled = status.isPreview || !isSecurityTokenReady;
 
   function handleChange(event) {
     const { checked, name, type, value } = event.target;
@@ -221,6 +227,14 @@ export default function AdminProductsPage() {
 
   async function handleSubmit(event) {
     event.preventDefault();
+    if (!csrfToken) {
+      setStatus((currentStatus) => ({
+        ...currentStatus,
+        actionMessage: adminSecurityTokenNotReadyMessage,
+      }));
+      return;
+    }
+
     const payload = formToPayload(formData);
 
     setStatus((currentStatus) => ({
@@ -253,12 +267,23 @@ export default function AdminProductsPage() {
     } catch (error) {
       setStatus((currentStatus) => ({
         ...currentStatus,
-        actionMessage: error.message || 'Product action failed.',
+        actionMessage: getAdminMutationErrorMessage(
+          error,
+          'Product action failed.',
+        ),
       }));
     }
   }
 
   async function handleDelete(product) {
+    if (!csrfToken) {
+      setStatus((currentStatus) => ({
+        ...currentStatus,
+        actionMessage: adminSecurityTokenNotReadyMessage,
+      }));
+      return;
+    }
+
     if (!window.confirm(`Delete ${product.name}?`)) {
       return;
     }
@@ -280,7 +305,10 @@ export default function AdminProductsPage() {
     } catch (error) {
       setStatus((currentStatus) => ({
         ...currentStatus,
-        actionMessage: error.message || `Could not delete ${product.name}.`,
+        actionMessage: getAdminMutationErrorMessage(
+          error,
+          `Could not delete ${product.name}.`,
+        ),
       }));
     }
   }
@@ -291,10 +319,13 @@ export default function AdminProductsPage() {
       title="Product management."
       description="Manage backend catalog products when the API is running, with local preview data as a development fallback."
     >
-      <AdminNotice status={status} />
+      <AdminNotice
+        isSecurityTokenReady={isSecurityTokenReady}
+        status={status}
+      />
 
       <ProductForm
-        disabled={status.isPreview}
+        disabled={areMutationsDisabled}
         editingProduct={editingProduct}
         formData={formData}
         onCancel={resetForm}
@@ -311,7 +342,7 @@ export default function AdminProductsPage() {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={status.isPreview}
+                disabled={areMutationsDisabled}
                 onClick={() => startEdit(product)}
                 aria-label={`Edit ${product.name}`}
                 className="rounded-full border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-zinc-950 hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-45"
@@ -327,7 +358,7 @@ export default function AdminProductsPage() {
               </Link>
               <button
                 type="button"
-                disabled={status.isPreview}
+                disabled={areMutationsDisabled}
                 onClick={() => handleDelete(product)}
                 aria-label={`Delete ${product.name}`}
                 className="rounded-full border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-45"
@@ -346,12 +377,12 @@ export default function AdminProductsPage() {
   );
 }
 
-function AdminNotice({ status }) {
+function AdminNotice({ isSecurityTokenReady, status }) {
   return (
     <>
       <div className="mb-4 rounded-lg border border-zinc-200 bg-white p-4 text-sm leading-6 text-zinc-600 shadow-sm shadow-zinc-950/5">
-        Admin catalog endpoints are connected for local development, but they
-        are still unprotected and not production-ready until auth is added.
+        Admin catalog endpoints are protected by admin auth and CSRF. Mutations
+        stay disabled until the current security token is ready.
       </div>
       {status.isLoading && (
         <div className="mb-4 rounded-lg border border-zinc-200 bg-white p-4 text-sm font-semibold text-zinc-600 shadow-sm shadow-zinc-950/5">
@@ -363,6 +394,12 @@ function AdminNotice({ status }) {
           <p className="font-semibold">Using local preview data.</p>
           <p className="mt-1">{status.error}</p>
           <p className="mt-1">Create, edit, and delete actions are disabled.</p>
+        </div>
+      )}
+      {!status.isLoading && !status.isPreview && !isSecurityTokenReady && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+          <p className="font-semibold">Admin security token is not ready.</p>
+          <p className="mt-1">{adminSecurityTokenNotReadyMessage}</p>
         </div>
       )}
       {!status.isLoading && status.error && !status.isPreview && (

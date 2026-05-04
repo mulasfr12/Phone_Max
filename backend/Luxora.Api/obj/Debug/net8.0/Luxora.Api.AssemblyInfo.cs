@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Luxora.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7c41e1fc4b6c0e6b8d7c3ab51e6d9caae5c93310")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f24cce57c5a685efa9e275255541fbc6661ec336")]
 [assembly: System.Reflection.AssemblyProductAttribute("Luxora.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Luxora.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
