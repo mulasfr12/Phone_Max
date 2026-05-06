@@ -18,7 +18,6 @@ public sealed class AdminProductsController : ControllerBase
         _productService = productService;
     }
 
-    // TODO: Protect admin endpoints with authentication and authorization before production.
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<ProductDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<ProductDto>>> GetProducts(
@@ -103,7 +102,109 @@ public sealed class AdminProductsController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("{productId}/images")]
+    [ProducesResponseType(typeof(IReadOnlyList<ProductImageDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IReadOnlyList<ProductImageDto>>> GetProductImages(
+        string productId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productService.GetProductImagesAsync(
+            productId,
+            cancellationToken);
+
+        return ToImageListActionResult(result);
+    }
+
+    [HttpPost("{productId}/images")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(ProductImageDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ProductImageDto>> UploadProductImage(
+        string productId,
+        [FromForm] IFormFile file,
+        [FromForm] string? altText,
+        [FromForm] bool setPrimary,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productService.UploadProductImageAsync(
+            productId,
+            file,
+            altText,
+            setPrimary,
+            cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            var image = result.Value!;
+            return Created(
+                $"/api/admin/products/{productId}/images/{image.Id}",
+                image);
+        }
+
+        if (result.IsNotFound)
+        {
+            return NotFound(new { errors = result.Errors });
+        }
+
+        return BadRequest(new { errors = result.Errors });
+    }
+
+    [HttpPatch("{productId}/images/{imageId}/primary")]
+    [ProducesResponseType(typeof(IReadOnlyList<ProductImageDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IReadOnlyList<ProductImageDto>>> SetPrimaryProductImage(
+        string productId,
+        string imageId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productService.SetPrimaryProductImageAsync(
+            productId,
+            imageId,
+            cancellationToken);
+
+        return ToImageListActionResult(result);
+    }
+
+    [HttpDelete("{productId}/images/{imageId}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteProductImage(
+        string productId,
+        string imageId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productService.DeleteProductImageAsync(
+            productId,
+            imageId,
+            cancellationToken);
+
+        if (result.IsNotFound)
+        {
+            return NotFound(new { errors = result.Errors });
+        }
+
+        return NoContent();
+    }
+
     private ActionResult<ProductDto> ToActionResult(ServiceResult<ProductDto> result)
+    {
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        if (result.IsNotFound)
+        {
+            return NotFound(new { errors = result.Errors });
+        }
+
+        return BadRequest(new { errors = result.Errors });
+    }
+
+    private ActionResult<IReadOnlyList<ProductImageDto>> ToImageListActionResult(
+        ServiceResult<IReadOnlyList<ProductImageDto>> result)
     {
         if (result.IsSuccess)
         {

@@ -21,6 +21,8 @@ builder.Services.Configure<FrontendSettings>(
     builder.Configuration.GetSection(FrontendSettings.SectionName));
 builder.Services.Configure<LuxoraCookieSettings>(
     builder.Configuration.GetSection(LuxoraCookieSettings.SectionName));
+builder.Services.Configure<ImageStorageSettings>(
+    builder.Configuration.GetSection(ImageStorageSettings.SectionName));
 
 builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddScoped<DatabaseSeeder>();
@@ -35,6 +37,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<ICheckoutRequestService, CheckoutRequestService>();
 builder.Services.AddScoped<IAdminAuthService, AdminAuthService>();
+builder.Services.AddScoped<IImageStorageService, AzureBlobImageStorageService>();
 builder.Services.AddScoped<IPasswordHasher<Luxora.Api.Models.AdminUser>, PasswordHasher<Luxora.Api.Models.AdminUser>>();
 
 builder.Services

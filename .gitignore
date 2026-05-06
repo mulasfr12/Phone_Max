@@ -44,3 +44,6 @@ temp/
 AGENTS.md
 docs/STYLE_DIRECTION.md
 docs/HOMEPAGE_PLAN.md
+
+# Local uploaded product images
+backend/Luxora.Api/wwwroot/uploads/

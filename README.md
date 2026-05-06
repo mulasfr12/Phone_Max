@@ -27,7 +27,7 @@ Luxora is a premium mobile-first storefront for phones and accessories. The expe
 
 ## Current Integration Status
 
-Luxora now has an ASP.NET Core backend foundation and selected frontend routes call the API. There is no customer authentication, payment gateway integration, inventory service, email/SMS notification, or image upload flow.
+Luxora now has an ASP.NET Core backend foundation and selected frontend routes call the API. There is no customer authentication, payment gateway integration, inventory service, or email/SMS notification flow. Admin product image uploads are supported through Azure Blob Storage.
 
 The cart is stored locally in the browser. Product browsing, checkout submission, and admin catalog/order pages can use the backend when it is running, with local preview fallbacks for development.
 
@@ -174,6 +174,8 @@ The checkout form sends customer details, fulfillment preference, payment method
 
 Admin fallback data is read-only. Create, edit, delete, and status mutation actions are disabled whenever an admin page is showing local preview data instead of backend data.
 
+`/admin/products` also supports backend product image management. Admins can upload product images, mark one image as primary, and delete images when the backend API is running. Uploaded images are returned by public product endpoints and rendered on storefront product cards/details. Products with no uploaded images keep the CSS product visual fallback.
+
 Admin auth endpoints:
 
 ```text
@@ -192,6 +194,10 @@ GET /api/admin/products/{id}
 POST /api/admin/products
 PUT /api/admin/products/{id}
 DELETE /api/admin/products/{id}
+GET /api/admin/products/{productId}/images
+POST /api/admin/products/{productId}/images
+PATCH /api/admin/products/{productId}/images/{imageId}/primary
+DELETE /api/admin/products/{productId}/images/{imageId}
 GET /api/admin/categories
 GET /api/admin/categories/{id}
 POST /api/admin/categories
@@ -209,11 +215,15 @@ Frontend admin routes are protected by `/admin/login`. On app load, the frontend
 
 Admin mutating requests use double-submit CSRF protection. After login or session restore, the frontend calls `GET /api/auth/admin/csrf`, receives a CSRF token, and the API also sets a non-HttpOnly `Luxora.Csrf` cookie. Admin `POST`, `PUT`, `PATCH`, and `DELETE` requests under `/api/admin/*`, plus `POST /api/auth/admin/change-password`, send that value in the `X-CSRF-TOKEN` header. Public storefront endpoints and admin `GET` requests do not require the CSRF header.
 
+Product image uploads are sent as `multipart/form-data` to admin endpoints and require both the HttpOnly admin auth cookie and the CSRF header. Upload limits default to 5 MB and allowed content types are `image/jpeg`, `image/png`, and `image/webp`.
+
 Admin login has a temporary lockout guard. The default development settings allow 5 failed attempts before a 15-minute lockout. Invalid credential responses remain generic and do not reveal whether an email exists.
 
 Cookie, CORS, and lockout settings are config-driven. Local defaults allow only the Vite origins `http://localhost:5173` and `https://localhost:5173`, use `SameSite=Lax`, and use `SecurePolicy=SameAsRequest` in Development. Production must configure the exact frontend origin, require HTTPS, and never use wildcard origins with credentialed CORS. Split frontend/backend domains may require `SameSite=None` and `SecurePolicy=Always`.
 
 MongoDB indexes are initialized at API startup. Admin email has a unique index. Product and category ids use MongoDB `_id`, which is already unique, and additional browse/admin indexes are created for category, sorting, checkout status, payment status, and created date.
+
+Uploaded product files are stored in Azure Blob Storage. The configured Azure container must be publicly readable for storefront image display unless a future private/SAS image delivery approach is added.
 
 Admin authorization is intentionally simple for now: one `Admin` role. Production still needs hardened account management, password rotation policy, deployment-specific cookie domain/SameSite review, and removal of development seed credentials.
 
@@ -235,6 +245,40 @@ MongoDB is configured in [backend/Luxora.Api/appsettings.json](backend/Luxora.Ap
   "AdminUsersCollectionName": "adminUsers"
 }
 ```
+
+Image upload storage is configured in the same file. Do not commit a real Azure Storage connection string:
+
+```json
+"ImageStorage": {
+  "Provider": "AzureBlob",
+  "ConnectionString": "",
+  "ContainerName": "product-images",
+  "PublicBaseUrl": "",
+  "MaxFileSizeBytes": 5242880,
+  "AllowedContentTypes": [
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+  ]
+}
+```
+
+For local development, provide the real Azure connection string with user-secrets or environment variables:
+
+```bash
+dotnet user-secrets init --project backend/Luxora.Api/Luxora.Api.csproj
+dotnet user-secrets set "ImageStorage:ConnectionString" "<azure-storage-connection-string>" --project backend/Luxora.Api/Luxora.Api.csproj
+dotnet user-secrets set "ImageStorage:ContainerName" "product-images" --project backend/Luxora.Api/Luxora.Api.csproj
+```
+
+Equivalent environment variables:
+
+```text
+ImageStorage__ConnectionString=<azure-storage-connection-string>
+ImageStorage__ContainerName=product-images
+```
+
+`ImageStorage__PublicBaseUrl` is optional and can be used for a CDN or custom public blob base URL.
 
 Security-related local defaults are also configured in `appsettings.json` and `appsettings.Development.json`:
 

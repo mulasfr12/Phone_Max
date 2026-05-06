@@ -3,12 +3,20 @@ import { Link } from 'react-router-dom';
 
 import { ApiError } from '../../api/apiClient.js';
 import {
+  deleteProductImage,
+  setPrimaryProductImage,
+  uploadProductImage,
+} from '../../api/adminProductImagesApi.js';
+import {
   createAdminProduct,
   deleteAdminProduct,
   getAdminProducts,
   updateAdminProduct,
 } from '../../api/adminProductsApi.js';
-import { normalizeProducts } from '../../api/productMappers.js';
+import {
+  normalizeProductImage,
+  normalizeProducts,
+} from '../../api/productMappers.js';
 import AdminShell from '../../components/admin/AdminShell.jsx';
 import AdminTable from '../../components/admin/AdminTable.jsx';
 import { useAdminAuth } from '../../context/AdminAuthContext.jsx';
@@ -33,6 +41,12 @@ const emptyProductForm = {
   stockStatus: 'in_stock',
   visual: 'phone',
   tone: 'from-zinc-950 via-zinc-800 to-slate-300',
+};
+
+const emptyImageForm = {
+  file: null,
+  altText: '',
+  setPrimary: false,
 };
 
 const inputClassName =
@@ -150,6 +164,12 @@ export default function AdminProductsPage() {
   });
   const [editingProduct, setEditingProduct] = useState(null);
   const [formData, setFormData] = useState(emptyProductForm);
+  const [activeImageProductId, setActiveImageProductId] = useState(null);
+  const [imageForm, setImageForm] = useState(emptyImageForm);
+  const [imageStatus, setImageStatus] = useState({
+    isLoading: false,
+    message: null,
+  });
 
   useEffect(() => {
     let isActive = true;
@@ -218,6 +238,26 @@ export default function AdminProductsPage() {
   function resetForm() {
     setEditingProduct(null);
     setFormData(emptyProductForm);
+  }
+
+  function replaceProductImages(productId, images) {
+    const normalizedImages = images.map(normalizeProductImage);
+    const primaryImage =
+      normalizedImages.find((image) => image.isPrimary) ||
+      normalizedImages[0] ||
+      null;
+    setProducts((currentProducts) =>
+      currentProducts.map((product) =>
+        product.id === productId
+          ? {
+              ...product,
+              images: normalizedImages,
+              primaryImage,
+              primaryImageUrl: primaryImage?.url || null,
+            }
+          : product,
+      ),
+    );
   }
 
   function startEdit(product) {
@@ -313,6 +353,134 @@ export default function AdminProductsPage() {
     }
   }
 
+  function toggleImagePanel(productId) {
+    setActiveImageProductId((currentProductId) =>
+      currentProductId === productId ? null : productId,
+    );
+    setImageForm(emptyImageForm);
+    setImageStatus({ isLoading: false, message: null });
+  }
+
+  function handleImageFormChange(event) {
+    const { checked, files, name, type, value } = event.target;
+    setImageForm((currentForm) => ({
+      ...currentForm,
+      [name]:
+        type === 'file'
+          ? files?.[0] || null
+          : type === 'checkbox'
+            ? checked
+            : value,
+    }));
+    setImageStatus({ isLoading: false, message: null });
+  }
+
+  async function handleImageUpload(product) {
+    if (!csrfToken) {
+      setImageStatus({
+        isLoading: false,
+        message: adminSecurityTokenNotReadyMessage,
+      });
+      return;
+    }
+
+    if (!imageForm.file) {
+      setImageStatus({
+        isLoading: false,
+        message: 'Choose an image file before uploading.',
+      });
+      return;
+    }
+
+    setImageStatus({ isLoading: true, message: 'Uploading image...' });
+
+    try {
+      const uploadedImage = await uploadProductImage(
+        product.id,
+        imageForm,
+        csrfToken,
+      );
+      const productImages = product.images || [];
+      const nextImages = imageForm.setPrimary || productImages.length === 0
+        ? [
+            ...productImages.map((image) => ({ ...image, isPrimary: false })),
+            uploadedImage,
+          ]
+        : [...productImages, uploadedImage];
+
+      replaceProductImages(product.id, nextImages);
+      setImageForm(emptyImageForm);
+      setImageStatus({ isLoading: false, message: 'Image uploaded.' });
+    } catch (error) {
+      setImageStatus({
+        isLoading: false,
+        message: getAdminMutationErrorMessage(error, 'Image upload failed.'),
+      });
+    }
+  }
+
+  async function handleSetPrimaryImage(product, imageId) {
+    if (!csrfToken) {
+      setImageStatus({
+        isLoading: false,
+        message: adminSecurityTokenNotReadyMessage,
+      });
+      return;
+    }
+
+    setImageStatus({ isLoading: true, message: 'Updating primary image...' });
+
+    try {
+      const images = await setPrimaryProductImage(product.id, imageId, csrfToken);
+      replaceProductImages(product.id, images);
+      setImageStatus({ isLoading: false, message: 'Primary image updated.' });
+    } catch (error) {
+      setImageStatus({
+        isLoading: false,
+        message: getAdminMutationErrorMessage(
+          error,
+          'Could not update primary image.',
+        ),
+      });
+    }
+  }
+
+  async function handleDeleteImage(product, imageId) {
+    if (!csrfToken) {
+      setImageStatus({
+        isLoading: false,
+        message: adminSecurityTokenNotReadyMessage,
+      });
+      return;
+    }
+
+    if (!window.confirm('Delete this image?')) {
+      return;
+    }
+
+    setImageStatus({ isLoading: true, message: 'Deleting image...' });
+
+    try {
+      await deleteProductImage(product.id, imageId, csrfToken);
+      const remainingImages = (product.images || []).filter(
+        (image) => image.id !== imageId,
+      );
+      if (
+        remainingImages.length > 0 &&
+        !remainingImages.some((image) => image.isPrimary)
+      ) {
+        remainingImages[0] = { ...remainingImages[0], isPrimary: true };
+      }
+      replaceProductImages(product.id, remainingImages);
+      setImageStatus({ isLoading: false, message: 'Image deleted.' });
+    } catch (error) {
+      setImageStatus({
+        isLoading: false,
+        message: getAdminMutationErrorMessage(error, 'Could not delete image.'),
+      });
+    }
+  }
+
   return (
     <AdminShell
       eyebrow="Catalog"
@@ -349,6 +517,15 @@ export default function AdminProductsPage() {
               >
                 Edit
               </button>
+              <button
+                type="button"
+                disabled={areMutationsDisabled}
+                onClick={() => toggleImagePanel(product.id)}
+                aria-label={`Manage images for ${product.name}`}
+                className="rounded-full border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-zinc-950 hover:text-zinc-950 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-45"
+              >
+                Images
+              </button>
               <Link
                 to={`/products/${product.id}`}
                 aria-label={`Preview ${product.name}`}
@@ -369,6 +546,19 @@ export default function AdminProductsPage() {
           )}
         />
       </div>
+
+      {activeImageProductId && (
+        <ProductImageManager
+          disabled={areMutationsDisabled}
+          imageForm={imageForm}
+          imageStatus={imageStatus}
+          onChange={handleImageFormChange}
+          onDeleteImage={handleDeleteImage}
+          onSetPrimaryImage={handleSetPrimaryImage}
+          onUpload={handleImageUpload}
+          product={products.find((product) => product.id === activeImageProductId)}
+        />
+      )}
 
       {!status.isLoading && sortedProducts.length === 0 && (
         <EmptyState label="No products found." />
@@ -414,6 +604,153 @@ function AdminNotice({ isSecurityTokenReady, status }) {
         </div>
       )}
     </>
+  );
+}
+
+function ProductImageManager({
+  disabled,
+  imageForm,
+  imageStatus,
+  onChange,
+  onDeleteImage,
+  onSetPrimaryImage,
+  onUpload,
+  product,
+}) {
+  if (!product) {
+    return null;
+  }
+
+  const images = product.images || [];
+
+  return (
+    <section className="mt-6 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm shadow-zinc-950/5 sm:p-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-zinc-950">
+            Images for {product.name}
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-zinc-500">
+            Upload local development images, set one primary image, or remove
+            images from the catalog.
+          </p>
+        </div>
+        <span className="w-fit rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">
+          {images.length} images
+        </span>
+      </div>
+
+      {disabled && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-800">
+          Image management requires backend API mode and a ready admin security
+          token.
+        </div>
+      )}
+
+      {imageStatus.message && (
+        <div className="mt-4 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
+          {imageStatus.message}
+        </div>
+      )}
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {images.map((image) => (
+          <article
+            key={image.id}
+            className="overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50"
+          >
+            <div className="aspect-[4/3] bg-zinc-200">
+              <img
+                src={image.url}
+                alt={image.altText || `${product.name} product image`}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            </div>
+            <div className="p-4">
+              <div className="flex flex-wrap items-center gap-2">
+                {image.isPrimary && (
+                  <span className="rounded-full bg-zinc-950 px-3 py-1 text-xs font-semibold text-white">
+                    Primary
+                  </span>
+                )}
+                <span className="text-xs font-semibold text-zinc-500">
+                  {Math.round((image.sizeBytes || 0) / 1024)} KB
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-zinc-600">
+                {image.altText || 'No alt text provided.'}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={disabled || image.isPrimary || imageStatus.isLoading}
+                  onClick={() => onSetPrimaryImage(product, image.id)}
+                  className="rounded-full border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-700 transition hover:border-zinc-950 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Set primary
+                </button>
+                <button
+                  type="button"
+                  disabled={disabled || imageStatus.isLoading}
+                  onClick={() => onDeleteImage(product, image.id)}
+                  className="rounded-full border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:border-rose-500 disabled:cursor-not-allowed disabled:opacity-45"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {images.length === 0 && (
+        <div className="mt-5 rounded-lg border border-zinc-200 bg-zinc-50 p-5 text-sm text-zinc-600">
+          No uploaded images yet. Storefront cards will keep using the CSS
+          product visual fallback.
+        </div>
+      )}
+
+      <div className="mt-5 grid gap-4 border-t border-zinc-100 pt-5 md:grid-cols-[1fr_1fr_auto] md:items-end">
+        <label className="text-sm font-semibold text-zinc-800">
+          Image file
+          <input
+            name="file"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            disabled={disabled || imageStatus.isLoading}
+            onChange={onChange}
+            className="mt-2 block w-full text-sm text-zinc-600 file:mr-4 file:rounded-full file:border-0 file:bg-zinc-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white disabled:cursor-not-allowed disabled:opacity-50"
+          />
+        </label>
+        <TextField
+          label="Alt text"
+          name="altText"
+          value={imageForm.altText}
+          onChange={onChange}
+          disabled={disabled || imageStatus.isLoading}
+        />
+        <label className="flex items-center gap-3 text-sm font-semibold text-zinc-800">
+          <input
+            name="setPrimary"
+            type="checkbox"
+            checked={imageForm.setPrimary}
+            onChange={onChange}
+            disabled={disabled || imageStatus.isLoading}
+            className="h-4 w-4 rounded border-zinc-300"
+          />
+          Set primary
+        </label>
+      </div>
+      <button
+        type="button"
+        disabled={disabled || imageStatus.isLoading || !imageForm.file}
+        onClick={() => onUpload(product)}
+        className="mt-5 rounded-full bg-zinc-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500"
+      >
+        {imageStatus.isLoading ? 'Working...' : 'Upload image'}
+      </button>
+    </section>
   );
 }
 

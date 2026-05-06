@@ -15,5 +15,7 @@ public sealed record ProductDto(
     string StockStatus,
     string Visual,
     string Tone,
+    IReadOnlyList<ProductImageDto> Images,
+    string? PrimaryImageUrl,
     DateTime CreatedAt,
     DateTime? UpdatedAt);

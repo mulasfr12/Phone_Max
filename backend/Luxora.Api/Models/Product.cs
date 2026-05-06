@@ -33,6 +33,8 @@ public sealed class Product
 
     public string Tone { get; set; } = string.Empty;
 
+    public List<ProductImage> Images { get; set; } = [];
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }

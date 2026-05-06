@@ -24,4 +24,25 @@ public interface IProductService
         CancellationToken cancellationToken);
 
     Task<ServiceResult<bool>> DeleteAsync(string id, CancellationToken cancellationToken);
+
+    Task<ServiceResult<ProductImageDto>> UploadProductImageAsync(
+        string productId,
+        IFormFile file,
+        string? altText,
+        bool setPrimary,
+        CancellationToken cancellationToken);
+
+    Task<ServiceResult<IReadOnlyList<ProductImageDto>>> GetProductImagesAsync(
+        string productId,
+        CancellationToken cancellationToken);
+
+    Task<ServiceResult<IReadOnlyList<ProductImageDto>>> SetPrimaryProductImageAsync(
+        string productId,
+        string imageId,
+        CancellationToken cancellationToken);
+
+    Task<ServiceResult<bool>> DeleteProductImageAsync(
+        string productId,
+        string imageId,
+        CancellationToken cancellationToken);
 }

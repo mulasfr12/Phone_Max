@@ -4,6 +4,8 @@ using Luxora.Api.Repositories.Interfaces;
 using Luxora.Api.Services.Interfaces;
 using Luxora.Api.Helpers;
 using Luxora.Api.Validators;
+using Luxora.Api.Settings;
+using Microsoft.Extensions.Options;
 
 namespace Luxora.Api.Services;
 
@@ -17,10 +19,17 @@ public sealed class ProductService : IProductService
     ];
 
     private readonly IProductRepository _productRepository;
+    private readonly IImageStorageService _imageStorageService;
+    private readonly ImageStorageSettings _imageStorageSettings;
 
-    public ProductService(IProductRepository productRepository)
+    public ProductService(
+        IProductRepository productRepository,
+        IImageStorageService imageStorageService,
+        IOptions<ImageStorageSettings> imageStorageOptions)
     {
         _productRepository = productRepository;
+        _imageStorageService = imageStorageService;
+        _imageStorageSettings = imageStorageOptions.Value;
     }
 
     public async Task<IReadOnlyList<ProductDto>> GetAllAsync(
@@ -148,6 +157,163 @@ public sealed class ProductService : IProductService
             : ServiceResult<bool>.NotFound(["Product was not found."]);
     }
 
+    public async Task<ServiceResult<ProductImageDto>> UploadProductImageAsync(
+        string productId,
+        IFormFile file,
+        string? altText,
+        bool setPrimary,
+        CancellationToken cancellationToken)
+    {
+        var product = await _productRepository.GetByIdAsync(productId, cancellationToken);
+        if (product is null)
+        {
+            return ServiceResult<ProductImageDto>.NotFound(["Product was not found."]);
+        }
+
+        var errors = ValidateImageFile(file);
+        if (errors.Count > 0)
+        {
+            return ServiceResult<ProductImageDto>.ValidationFailure(errors);
+        }
+
+        var existingImages = product.Images ?? [];
+        var storedImage = await _imageStorageService.SaveAsync(
+            productId,
+            file,
+            cancellationToken);
+        var shouldBePrimary = setPrimary || existingImages.Count == 0;
+
+        var image = new ProductImage
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Url = storedImage.Url,
+            FileName = storedImage.FileName,
+            OriginalFileName = storedImage.OriginalFileName,
+            ContentType = storedImage.ContentType,
+            SizeBytes = storedImage.SizeBytes,
+            AltText = ValidationHelper.HasValue(altText) ? altText!.Trim() : null,
+            IsPrimary = shouldBePrimary,
+            UploadedAt = DateTime.UtcNow
+        };
+
+        if (shouldBePrimary)
+        {
+            var normalizedImages = existingImages
+                .Select(existingImage =>
+                {
+                    existingImage.IsPrimary = false;
+                    return existingImage;
+                })
+                .Append(image)
+                .ToList();
+
+            await _productRepository.ReplaceImagesAsync(
+                productId,
+                normalizedImages,
+                cancellationToken);
+        }
+        else
+        {
+            await _productRepository.AddImageAsync(productId, image, cancellationToken);
+        }
+
+        return ServiceResult<ProductImageDto>.Success(MapImageToDto(image));
+    }
+
+    public async Task<ServiceResult<IReadOnlyList<ProductImageDto>>> GetProductImagesAsync(
+        string productId,
+        CancellationToken cancellationToken)
+    {
+        var product = await _productRepository.GetByIdAsync(productId, cancellationToken);
+        if (product is null)
+        {
+            return ServiceResult<IReadOnlyList<ProductImageDto>>.NotFound([
+                "Product was not found."
+            ]);
+        }
+
+        return ServiceResult<IReadOnlyList<ProductImageDto>>.Success(
+            NormalizeImages(product.Images).Select(MapImageToDto).ToList());
+    }
+
+    public async Task<ServiceResult<IReadOnlyList<ProductImageDto>>> SetPrimaryProductImageAsync(
+        string productId,
+        string imageId,
+        CancellationToken cancellationToken)
+    {
+        var product = await _productRepository.GetByIdAsync(productId, cancellationToken);
+        if (product is null)
+        {
+            return ServiceResult<IReadOnlyList<ProductImageDto>>.NotFound([
+                "Product was not found."
+            ]);
+        }
+
+        var images = NormalizeImages(product.Images);
+        if (!images.Any(image => image.Id == imageId))
+        {
+            return ServiceResult<IReadOnlyList<ProductImageDto>>.NotFound([
+                "Product image was not found."
+            ]);
+        }
+
+        foreach (var image in images)
+        {
+            image.IsPrimary = image.Id == imageId;
+        }
+
+        var updatedProduct = await _productRepository.ReplaceImagesAsync(
+            productId,
+            images,
+            cancellationToken);
+
+        return ServiceResult<IReadOnlyList<ProductImageDto>>.Success(
+            NormalizeImages(updatedProduct?.Images).Select(MapImageToDto).ToList());
+    }
+
+    public async Task<ServiceResult<bool>> DeleteProductImageAsync(
+        string productId,
+        string imageId,
+        CancellationToken cancellationToken)
+    {
+        var product = await _productRepository.GetByIdAsync(productId, cancellationToken);
+        if (product is null)
+        {
+            return ServiceResult<bool>.NotFound(["Product was not found."]);
+        }
+
+        var images = NormalizeImages(product.Images);
+        var imageToDelete = images.FirstOrDefault(image => image.Id == imageId);
+        if (imageToDelete is null)
+        {
+            return ServiceResult<bool>.NotFound(["Product image was not found."]);
+        }
+
+        var remainingImages = images
+            .Where(image => image.Id != imageId)
+            .ToList();
+
+        if (imageToDelete.IsPrimary && remainingImages.Count > 0)
+        {
+            remainingImages[0].IsPrimary = true;
+        }
+
+        if (remainingImages.Count > 0 && !remainingImages.Any(image => image.IsPrimary))
+        {
+            remainingImages[0].IsPrimary = true;
+        }
+
+        await _productRepository.ReplaceImagesAsync(
+            productId,
+            remainingImages,
+            cancellationToken);
+        await _imageStorageService.DeleteAsync(
+            imageToDelete.FileName,
+            cancellationToken);
+
+        return ServiceResult<bool>.Success(true);
+    }
+
     private static List<string> ValidateProductRequest(
         string? name,
         string? categoryId,
@@ -209,8 +375,59 @@ public sealed class ProductService : IProductService
             .ToList() ?? [];
     }
 
+    private List<string> ValidateImageFile(IFormFile? file)
+    {
+        var errors = new List<string>();
+
+        if (file is null || file.Length == 0)
+        {
+            errors.Add("Image file is required.");
+            return errors;
+        }
+
+        if (file.Length > _imageStorageSettings.MaxFileSizeBytes)
+        {
+            errors.Add("Image file is too large.");
+        }
+
+        if (!_imageStorageSettings.AllowedContentTypes.Contains(
+            file.ContentType,
+            StringComparer.OrdinalIgnoreCase))
+        {
+            errors.Add("Image file type is not supported.");
+        }
+
+        return errors;
+    }
+
+    private static List<ProductImage> NormalizeImages(List<ProductImage>? images)
+    {
+        return images?
+            .OrderByDescending(image => image.IsPrimary)
+            .ThenBy(image => image.UploadedAt)
+            .ToList() ?? [];
+    }
+
+    private static ProductImageDto MapImageToDto(ProductImage image)
+    {
+        return new ProductImageDto(
+            image.Id,
+            image.Url,
+            image.FileName,
+            image.OriginalFileName,
+            image.ContentType,
+            image.SizeBytes,
+            image.AltText,
+            image.IsPrimary,
+            image.UploadedAt);
+    }
+
     private static ProductDto MapToDto(Product product)
     {
+        var images = NormalizeImages(product.Images);
+        var primaryImageUrl = images.FirstOrDefault(image => image.IsPrimary)?.Url
+            ?? images.FirstOrDefault()?.Url;
+
         return new ProductDto(
             product.Id,
             product.Name,
@@ -226,6 +443,8 @@ public sealed class ProductService : IProductService
             product.StockStatus,
             product.Visual,
             product.Tone,
+            images.Select(MapImageToDto).ToList(),
+            primaryImageUrl,
             product.CreatedAt,
             product.UpdatedAt);
     }

@@ -46,15 +46,18 @@ async function parseJsonResponse(response) {
 }
 
 async function apiRequest(path, { method = 'GET', query, body, headers } = {}) {
+  const isFormData = body instanceof FormData;
   const response = await fetch(buildUrl(path, query), {
     method,
     credentials: 'include',
     headers: {
       Accept: 'application/json',
-      ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      ...(body !== undefined && !isFormData
+        ? { 'Content-Type': 'application/json' }
+        : {}),
       ...headers,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body !== undefined && !isFormData ? JSON.stringify(body) : body,
   });
 
   const data = await parseJsonResponse(response);

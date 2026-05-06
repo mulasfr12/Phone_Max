@@ -1,3 +1,5 @@
+import { API_BASE_URL } from './apiClient.js';
+
 const fallbackToneByCategory = {
   Phones: 'from-zinc-950 via-zinc-800 to-slate-300',
   Cases: 'from-stone-950 via-zinc-800 to-zinc-300',
@@ -7,8 +9,39 @@ const fallbackToneByCategory = {
   Accessories: 'from-zinc-950 via-neutral-800 to-emerald-200',
 };
 
+function resolveImageUrl(url) {
+  if (!url) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+
+  return new URL(url, API_BASE_URL).toString();
+}
+
+export function normalizeProductImage(image) {
+  return {
+    id: image.id,
+    url: resolveImageUrl(image.url),
+    fileName: image.fileName,
+    originalFileName: image.originalFileName,
+    contentType: image.contentType,
+    sizeBytes: image.sizeBytes,
+    altText: image.altText,
+    isPrimary: Boolean(image.isPrimary),
+    uploadedAt: image.uploadedAt,
+  };
+}
+
 export function normalizeProduct(product) {
   const category = product.category ?? product.categoryName ?? 'Accessories';
+  const images = Array.isArray(product.images)
+    ? product.images.map(normalizeProductImage)
+    : [];
+  const primaryImage =
+    images.find((image) => image.isPrimary) || images[0] || null;
 
   return {
     id: product.id,
@@ -29,6 +62,9 @@ export function normalizeProduct(product) {
       product.tone ||
       fallbackToneByCategory[category] ||
       fallbackToneByCategory.Accessories,
+    images,
+    primaryImageUrl: resolveImageUrl(product.primaryImageUrl) || primaryImage?.url,
+    primaryImage,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };

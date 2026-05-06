@@ -98,4 +98,42 @@ public sealed class ProductRepository : IProductRepository
 
         return result.DeletedCount > 0;
     }
+
+    public async Task<Product?> AddImageAsync(
+        string productId,
+        ProductImage image,
+        CancellationToken cancellationToken)
+    {
+        var update = Builders<Product>.Update
+            .Push(product => product.Images, image)
+            .Set(product => product.UpdatedAt, DateTime.UtcNow);
+
+        var result = await _context.Products.UpdateOneAsync(
+            product => product.Id == productId,
+            update,
+            cancellationToken: cancellationToken);
+
+        return result.MatchedCount == 0
+            ? null
+            : await GetByIdAsync(productId, cancellationToken);
+    }
+
+    public async Task<Product?> ReplaceImagesAsync(
+        string productId,
+        IReadOnlyList<ProductImage> images,
+        CancellationToken cancellationToken)
+    {
+        var update = Builders<Product>.Update
+            .Set(product => product.Images, images.ToList())
+            .Set(product => product.UpdatedAt, DateTime.UtcNow);
+
+        var result = await _context.Products.UpdateOneAsync(
+            product => product.Id == productId,
+            update,
+            cancellationToken: cancellationToken);
+
+        return result.MatchedCount == 0
+            ? null
+            : await GetByIdAsync(productId, cancellationToken);
+    }
 }

@@ -9,9 +9,28 @@ import { useCart } from '../context/CartContext.jsx';
 import { products } from '../data/products.js';
 import { formatPrice } from '../utils/money.js';
 
-function DetailProductVisual({ product }) {
+function DetailProductVisual({ image, product }) {
   const visualBase =
     'absolute border border-white/30 bg-white/10 shadow-[0_34px_90px_rgba(0,0,0,0.44)] backdrop-blur-md';
+
+  if (image?.url) {
+    return (
+      <div className="relative min-h-[28rem] overflow-hidden rounded-lg bg-zinc-950 shadow-2xl shadow-zinc-950/15">
+        <img
+          src={image.url}
+          alt={
+            image.altText ||
+            `${product.name} in ${product.finish || 'featured finish'}`
+          }
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-white/5" />
+        <div className="absolute bottom-5 left-5 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white/80 backdrop-blur-md">
+          {product.category}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -106,6 +125,7 @@ export default function ProductDetailsPage() {
   const { id } = useParams();
   const { addToCart } = useCart();
   const [product, setProduct] = useState(null);
+  const [selectedImageId, setSelectedImageId] = useState(null);
   const [status, setStatus] = useState({
     isLoading: true,
     isPreview: false,
@@ -132,6 +152,7 @@ export default function ProductDetailsPage() {
         }
 
         setProduct(normalizeProduct(apiProduct));
+        setSelectedImageId(null);
         setStatus({
           isLoading: false,
           isPreview: false,
@@ -158,6 +179,7 @@ export default function ProductDetailsPage() {
 
         if (!(error instanceof ApiError) && localProduct) {
           setProduct(localProduct);
+          setSelectedImageId(null);
           setStatus({
             isLoading: false,
             isPreview: true,
@@ -202,6 +224,17 @@ export default function ProductDetailsPage() {
       )
       .slice(0, 3);
   }, [product]);
+  const selectedImage = useMemo(() => {
+    if (!product?.images?.length) {
+      return null;
+    }
+
+    return (
+      product.images.find((image) => image.id === selectedImageId) ||
+      product.primaryImage ||
+      product.images[0]
+    );
+  }, [product, selectedImageId]);
 
   if (status.isLoading) {
     return (
@@ -278,7 +311,33 @@ export default function ProductDetailsPage() {
       )}
 
       <section className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-        <DetailProductVisual product={product} />
+        <div>
+          <DetailProductVisual image={selectedImage} product={product} />
+          {product.images?.length > 1 && (
+            <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+              {product.images.map((image) => (
+                <button
+                  key={image.id}
+                  type="button"
+                  onClick={() => setSelectedImageId(image.id)}
+                  aria-label={`View ${image.altText || product.name} image`}
+                  className={`h-20 w-24 shrink-0 overflow-hidden rounded-lg border bg-zinc-100 transition focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-offset-2 ${
+                    selectedImage?.id === image.id
+                      ? 'border-zinc-950'
+                      : 'border-zinc-200 hover:border-zinc-400'
+                  }`}
+                >
+                  <img
+                    src={image.url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm shadow-zinc-950/5 sm:p-8 lg:p-10">
           <div className="flex flex-wrap items-center gap-3">

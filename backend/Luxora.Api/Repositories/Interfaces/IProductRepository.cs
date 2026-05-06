@@ -18,4 +18,14 @@ public interface IProductRepository
     Task<Product?> UpdateAsync(Product product, CancellationToken cancellationToken);
 
     Task<bool> DeleteAsync(string id, CancellationToken cancellationToken);
+
+    Task<Product?> AddImageAsync(
+        string productId,
+        ProductImage image,
+        CancellationToken cancellationToken);
+
+    Task<Product?> ReplaceImagesAsync(
+        string productId,
+        IReadOnlyList<ProductImage> images,
+        CancellationToken cancellationToken);
 }

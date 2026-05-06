@@ -78,6 +78,9 @@ function ProductVisual({ id }) {
 export default function ProductCard({ product }) {
   const reduceMotion = useReducedMotion();
   const { addToCart } = useCart();
+  const imageAlt =
+    product.primaryImage?.altText ||
+    `${product.name} in ${product.finish || 'featured finish'}`;
 
   return (
     <motion.article
@@ -88,10 +91,21 @@ export default function ProductCard({ product }) {
       <div
         className={`relative aspect-[4/3] overflow-hidden bg-gradient-to-br ${product.tone}`}
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_16%,rgba(255,255,255,0.24),transparent_22%)]" />
-        <div className="absolute inset-x-6 top-6 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
-        <ProductVisual id={product.id} />
-        <div className="absolute bottom-5 left-1/2 h-12 w-40 -translate-x-1/2 rounded-full bg-white/20 blur-xl" />
+        {product.primaryImageUrl ? (
+          <img
+            src={product.primaryImageUrl}
+            alt={imageAlt}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_16%,rgba(255,255,255,0.24),transparent_22%)]" />
+            <div className="absolute inset-x-6 top-6 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+            <ProductVisual id={product.id} />
+            <div className="absolute bottom-5 left-1/2 h-12 w-40 -translate-x-1/2 rounded-full bg-white/20 blur-xl" />
+          </>
+        )}
         <div className="absolute right-5 top-5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur-md">
           Curated
         </div>
