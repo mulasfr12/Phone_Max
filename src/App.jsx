@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import CartToast from './components/CartToast.jsx';
 import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
+import WhatsAppButton from './components/WhatsAppButton.jsx';
 import { AdminAuthProvider } from './context/AdminAuthContext.jsx';
 import { CartProvider } from './context/CartContext.jsx';
 import Footer from './sections/Footer.jsx';
@@ -101,6 +102,7 @@ export default function App() {
             </Routes>
           </Suspense>
           <CartToast />
+          <WhatsAppButton />
           <Footer />
         </AdminAuthProvider>
       </CartProvider>

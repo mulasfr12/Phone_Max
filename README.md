@@ -24,14 +24,15 @@ Luxora is a premium mobile-first storefront for phones and accessories. The expe
 - Frontend-only admin dashboard mockup for catalog, categories, and order requests
 - Route-level lazy loading for page bundles
 - ASP.NET Core API foundation with health, product/category browsing, and checkout request endpoints
+- Customer-facing WhatsApp contact button using `wa.me`
 
 ## Current Integration Status
 
-Luxora now has an ASP.NET Core backend foundation and selected frontend routes call the API. There is no customer authentication, payment gateway integration, inventory service, or email/SMS notification flow. Admin product image uploads are supported through Azure Blob Storage.
+Luxora now has an ASP.NET Core backend foundation and selected frontend routes call the API. There is no customer authentication, payment gateway integration, inventory service, or SMS notification flow. Checkout request email notifications are supported through SMTP, and admin product image uploads are supported through Azure Blob Storage.
 
 The cart is stored locally in the browser. Product browsing, checkout submission, and admin catalog/order pages can use the backend when it is running, with local preview fallbacks for development.
 
-Backend checkout requests support `pay_on_delivery` and `manual_lipa_payment`, but no online payment is processed and manual LIPA payments are not automatically verified. Admin API endpoints require HttpOnly cookie-based admin authentication.
+Backend checkout requests support `pay_on_delivery` and `manual_lipa_payment`, but no online payment is processed and manual LIPA payments are not automatically verified. When a checkout request is created, the backend attempts to email the configured admin notification address. Admin API endpoints require HttpOnly cookie-based admin authentication.
 
 Product prices are stored as `priceCents` plus `currency` and formatted in the UI. Cart items store a `productId`, `quantity`, and a local product snapshot for frontend-only display.
 
@@ -72,6 +73,8 @@ VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
 The product browsing pages use the backend when available and fall back to local preview data when the API cannot be reached. The homepage featured products, cart, checkout preview, and admin mockup still use local data for now.
+
+The floating WhatsApp contact button appears on customer-facing routes only and opens a `wa.me` chat link. Update [src/config/contactConfig.js](src/config/contactConfig.js) with the production WhatsApp number and default message before launch.
 
 Start the local dev server:
 
@@ -166,7 +169,7 @@ To test checkout request submission:
 5. Run the frontend.
 6. Add products to the bag and submit `/checkout`.
 
-The checkout form sends customer details, fulfillment preference, payment method, notes, and item `productId`/`quantity` pairs. It does not send the frontend subtotal as trusted data; the backend recalculates totals from MongoDB products. If the backend is unavailable, the page falls back to a local preview confirmation and clearly labels it as local-only.
+The checkout form sends customer details, fulfillment preference, payment method, notes, and item `productId`/`quantity` pairs. It does not send the frontend subtotal as trusted data; the backend recalculates totals from MongoDB products. After saving the checkout request, the backend attempts to email the shop/admin with order details. If email sending fails, checkout request creation still succeeds and the error is logged internally. If the backend is unavailable, the page falls back to a local preview confirmation and clearly labels it as local-only.
 
 `/admin/orders` can read and update backend checkout requests when the API is running. It supports local preview fallback when the backend is unavailable. Backend admin endpoints require an authenticated admin cookie.
 
@@ -281,6 +284,21 @@ ImageStorage__ContainerName=product-images
 `ImageStorage__PublicBaseUrl` is optional and can be used for a CDN or custom public blob base URL.
 
 Production should still add image resizing/optimization, cache-control headers, and any required malware scanning or moderation workflow before accepting broad catalog uploads.
+
+Email notifications are configured through the `Email` section. Keep real SMTP credentials in user-secrets or environment variables, never in committed config:
+
+```text
+Email__FromEmail=orders@example.com
+Email__FromName=Luxora
+Email__AdminNotificationEmail=admin@example.com
+Email__SmtpHost=smtp.example.com
+Email__SmtpPort=587
+Email__SmtpUsername=<smtp-username>
+Email__SmtpPassword=<smtp-password>
+Email__EnableSsl=true
+```
+
+If SMTP is missing or unavailable, checkout requests are still created successfully and notification errors are logged without exposing SMTP details to customers.
 
 Security-related local defaults are also configured in `appsettings.json` and `appsettings.Development.json`:
 

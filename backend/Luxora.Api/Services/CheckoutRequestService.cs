@@ -16,13 +16,19 @@ public sealed class CheckoutRequestService : ICheckoutRequestService
 
     private readonly ICheckoutRequestRepository _checkoutRequestRepository;
     private readonly IProductRepository _productRepository;
+    private readonly IOrderNotificationService _orderNotificationService;
+    private readonly ILogger<CheckoutRequestService> _logger;
 
     public CheckoutRequestService(
         ICheckoutRequestRepository checkoutRequestRepository,
-        IProductRepository productRepository)
+        IProductRepository productRepository,
+        IOrderNotificationService orderNotificationService,
+        ILogger<CheckoutRequestService> logger)
     {
         _checkoutRequestRepository = checkoutRequestRepository;
         _productRepository = productRepository;
+        _orderNotificationService = orderNotificationService;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<CheckoutRequestDto>> GetAllAsync(
@@ -125,6 +131,7 @@ public sealed class CheckoutRequestService : ICheckoutRequestService
         };
 
         await _checkoutRequestRepository.CreateAsync(checkoutRequest, cancellationToken);
+        await TrySendCheckoutNotificationAsync(checkoutRequest, cancellationToken);
 
         return ServiceResult<CheckoutRequestDto>.Success(MapToDto(checkoutRequest));
     }
@@ -250,6 +257,25 @@ public sealed class CheckoutRequestService : ICheckoutRequestService
         }
 
         return allowedValues.Contains(value!.Trim().ToLowerInvariant());
+    }
+
+    private async Task TrySendCheckoutNotificationAsync(
+        CheckoutRequest checkoutRequest,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _orderNotificationService.SendCheckoutRequestCreatedAsync(
+                checkoutRequest,
+                cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            _logger.LogWarning(
+                exception,
+                "Checkout request notification email failed for request {CheckoutRequestId}.",
+                checkoutRequest.Id);
+        }
     }
 
     private static CheckoutRequestDto MapToDto(CheckoutRequest checkoutRequest)
