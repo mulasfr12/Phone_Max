@@ -11,6 +11,13 @@ obj/
 .env
 .env.*
 !.env.example
+backend/Luxora.Api/appsettings.*.local.json
+backend/Luxora.Api/appsettings.Production.json
+*.pubxml
+*.PublishSettings
+*.publishsettings
+*.azuresecrets
+*secrets*.json
 
 # Logs
 logs/

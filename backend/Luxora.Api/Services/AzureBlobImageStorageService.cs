@@ -74,21 +74,28 @@ public sealed class AzureBlobImageStorageService : IImageStorageService
             file.Length);
     }
 
-    public async Task DeleteAsync(string fileName, CancellationToken cancellationToken)
+    public async Task<bool> DeleteAsync(
+        string productId,
+        string fileName,
+        CancellationToken cancellationToken)
     {
         if (!ValidationHelper.HasValue(fileName))
         {
-            return;
+            return true;
         }
 
         var safeBlobName = fileName.Trim().Replace('\\', '/');
-        if (safeBlobName.Contains("..", StringComparison.Ordinal))
+        var expectedPrefix = $"products/{IdHelper.NormalizeId(productId)}/";
+
+        if (safeBlobName.Contains("..", StringComparison.Ordinal)
+            || !safeBlobName.StartsWith(expectedPrefix, StringComparison.Ordinal))
         {
-            return;
+            return false;
         }
 
         var blobClient = CreateContainerClient().GetBlobClient(safeBlobName);
         await blobClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
+        return true;
     }
 
     private BlobContainerClient CreateContainerClient()

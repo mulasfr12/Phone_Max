@@ -215,7 +215,7 @@ Frontend admin routes are protected by `/admin/login`. On app load, the frontend
 
 Admin mutating requests use double-submit CSRF protection. After login or session restore, the frontend calls `GET /api/auth/admin/csrf`, receives a CSRF token, and the API also sets a non-HttpOnly `Luxora.Csrf` cookie. Admin `POST`, `PUT`, `PATCH`, and `DELETE` requests under `/api/admin/*`, plus `POST /api/auth/admin/change-password`, send that value in the `X-CSRF-TOKEN` header. Public storefront endpoints and admin `GET` requests do not require the CSRF header.
 
-Product image uploads are sent as `multipart/form-data` to admin endpoints and require both the HttpOnly admin auth cookie and the CSRF header. Upload limits default to 5 MB and allowed content types are `image/jpeg`, `image/png`, and `image/webp`.
+Product image uploads are sent as `multipart/form-data` to admin endpoints and require both the HttpOnly admin auth cookie and the CSRF header. Upload limits default to 5 MB and allowed content types are `image/jpeg`, `image/png`, and `image/webp`. The backend validates both the declared content type and the file signature for JPEG, PNG, and WebP before uploading.
 
 Admin login has a temporary lockout guard. The default development settings allow 5 failed attempts before a 15-minute lockout. Invalid credential responses remain generic and do not reveal whether an email exists.
 
@@ -223,7 +223,7 @@ Cookie, CORS, and lockout settings are config-driven. Local defaults allow only 
 
 MongoDB indexes are initialized at API startup. Admin email has a unique index. Product and category ids use MongoDB `_id`, which is already unique, and additional browse/admin indexes are created for category, sorting, checkout status, payment status, and created date.
 
-Uploaded product files are stored in Azure Blob Storage. The configured Azure container must be publicly readable for storefront image display unless a future private/SAS image delivery approach is added.
+Uploaded product files are stored in Azure Blob Storage. The configured Azure container must be publicly readable for storefront image display unless a future private/SAS image delivery approach is added. Azure storage configuration or upload failures are returned as safe admin-facing errors without exposing connection strings or internal provider details.
 
 Admin authorization is intentionally simple for now: one `Admin` role. Production still needs hardened account management, password rotation policy, deployment-specific cookie domain/SameSite review, and removal of development seed credentials.
 
@@ -246,7 +246,7 @@ MongoDB is configured in [backend/Luxora.Api/appsettings.json](backend/Luxora.Ap
 }
 ```
 
-Image upload storage is configured in the same file. Do not commit a real Azure Storage connection string:
+Image upload storage is configured in the same file. Do not commit a real Azure Storage connection string or publish profile:
 
 ```json
 "ImageStorage": {
@@ -279,6 +279,8 @@ ImageStorage__ContainerName=product-images
 ```
 
 `ImageStorage__PublicBaseUrl` is optional and can be used for a CDN or custom public blob base URL.
+
+Production should still add image resizing/optimization, cache-control headers, and any required malware scanning or moderation workflow before accepting broad catalog uploads.
 
 Security-related local defaults are also configured in `appsettings.json` and `appsettings.Development.json`:
 

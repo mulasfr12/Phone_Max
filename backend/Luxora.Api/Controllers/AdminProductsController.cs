@@ -99,6 +99,11 @@ public sealed class AdminProductsController : ControllerBase
             return NotFound(new { errors = result.Errors });
         }
 
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { errors = result.Errors });
+        }
+
         return NoContent();
     }
 
@@ -183,6 +188,11 @@ public sealed class AdminProductsController : ControllerBase
         if (result.IsNotFound)
         {
             return NotFound(new { errors = result.Errors });
+        }
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { errors = result.Errors });
         }
 
         return NoContent();

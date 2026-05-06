@@ -631,8 +631,8 @@ function ProductImageManager({
             Images for {product.name}
           </h2>
           <p className="mt-1 text-sm leading-6 text-zinc-500">
-            Upload local development images, set one primary image, or remove
-            images from the catalog.
+            Upload Azure-hosted product images, set one primary image, or
+            remove images from the catalog.
           </p>
         </div>
         <span className="w-fit rounded-full bg-zinc-100 px-3 py-1 text-xs font-semibold text-zinc-600">

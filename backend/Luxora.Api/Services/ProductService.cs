@@ -11,6 +11,11 @@ namespace Luxora.Api.Services;
 
 public sealed class ProductService : IProductService
 {
+    private const string ImageStorageUnavailableMessage =
+        "Image storage is not configured or unavailable. Please check Azure Blob Storage settings.";
+    private const string ImageDeleteFailedMessage =
+        "Image deletion could not be completed. Please check Azure Blob Storage settings.";
+
     private static readonly string[] AllowedStockStatuses = [
         "in_stock",
         "low_stock",
@@ -21,15 +26,18 @@ public sealed class ProductService : IProductService
     private readonly IProductRepository _productRepository;
     private readonly IImageStorageService _imageStorageService;
     private readonly ImageStorageSettings _imageStorageSettings;
+    private readonly ILogger<ProductService> _logger;
 
     public ProductService(
         IProductRepository productRepository,
         IImageStorageService imageStorageService,
-        IOptions<ImageStorageSettings> imageStorageOptions)
+        IOptions<ImageStorageSettings> imageStorageOptions,
+        ILogger<ProductService> logger)
     {
         _productRepository = productRepository;
         _imageStorageService = imageStorageService;
         _imageStorageSettings = imageStorageOptions.Value;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<ProductDto>> GetAllAsync(
@@ -170,17 +178,32 @@ public sealed class ProductService : IProductService
             return ServiceResult<ProductImageDto>.NotFound(["Product was not found."]);
         }
 
-        var errors = ValidateImageFile(file);
+        var errors = await ValidateImageFileAsync(file, cancellationToken);
         if (errors.Count > 0)
         {
             return ServiceResult<ProductImageDto>.ValidationFailure(errors);
         }
 
         var existingImages = product.Images ?? [];
-        var storedImage = await _imageStorageService.SaveAsync(
-            productId,
-            file,
-            cancellationToken);
+        StoredImageResult storedImage;
+        try
+        {
+            storedImage = await _imageStorageService.SaveAsync(
+                productId,
+                file,
+                cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            _logger.LogWarning(
+                exception,
+                "Product image upload failed while saving to storage for product {ProductId}.",
+                productId);
+            return ServiceResult<ProductImageDto>.ValidationFailure([
+                ImageStorageUnavailableMessage
+            ]);
+        }
+
         var shouldBePrimary = setPrimary || existingImages.Count == 0;
 
         var image = new ProductImage
@@ -207,14 +230,57 @@ public sealed class ProductService : IProductService
                 .Append(image)
                 .ToList();
 
-            await _productRepository.ReplaceImagesAsync(
-                productId,
-                normalizedImages,
-                cancellationToken);
+            try
+            {
+                var updatedProduct = await _productRepository.ReplaceImagesAsync(
+                    productId,
+                    normalizedImages,
+                    cancellationToken);
+
+                if (updatedProduct is null)
+                {
+                    await TryDeleteStoredImageAsync(productId, storedImage.FileName, cancellationToken);
+                    return ServiceResult<ProductImageDto>.NotFound(["Product was not found."]);
+                }
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                _logger.LogWarning(
+                    exception,
+                    "Product image upload metadata save failed for product {ProductId}.",
+                    productId);
+                await TryDeleteStoredImageAsync(productId, storedImage.FileName, cancellationToken);
+                return ServiceResult<ProductImageDto>.ValidationFailure([
+                    "Image metadata could not be saved. The uploaded blob was cleaned up."
+                ]);
+            }
         }
         else
         {
-            await _productRepository.AddImageAsync(productId, image, cancellationToken);
+            try
+            {
+                var updatedProduct = await _productRepository.AddImageAsync(
+                    productId,
+                    image,
+                    cancellationToken);
+
+                if (updatedProduct is null)
+                {
+                    await TryDeleteStoredImageAsync(productId, storedImage.FileName, cancellationToken);
+                    return ServiceResult<ProductImageDto>.NotFound(["Product was not found."]);
+                }
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                _logger.LogWarning(
+                    exception,
+                    "Product image upload metadata save failed for product {ProductId}.",
+                    productId);
+                await TryDeleteStoredImageAsync(productId, storedImage.FileName, cancellationToken);
+                return ServiceResult<ProductImageDto>.ValidationFailure([
+                    "Image metadata could not be saved. The uploaded blob was cleaned up."
+                ]);
+            }
         }
 
         return ServiceResult<ProductImageDto>.Success(MapImageToDto(image));
@@ -303,13 +369,55 @@ public sealed class ProductService : IProductService
             remainingImages[0].IsPrimary = true;
         }
 
-        await _productRepository.ReplaceImagesAsync(
-            productId,
-            remainingImages,
-            cancellationToken);
-        await _imageStorageService.DeleteAsync(
-            imageToDelete.FileName,
-            cancellationToken);
+        bool storageDeleted;
+        try
+        {
+            storageDeleted = await _imageStorageService.DeleteAsync(
+                productId,
+                imageToDelete.FileName,
+                cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            _logger.LogWarning(
+                exception,
+                "Product image delete failed while removing blob for product {ProductId}.",
+                productId);
+            return ServiceResult<bool>.ValidationFailure([ImageDeleteFailedMessage]);
+        }
+
+        if (!storageDeleted)
+        {
+            _logger.LogWarning(
+                "Product image delete skipped because blob name was outside product scope. ProductId: {ProductId}, BlobName: {BlobName}",
+                productId,
+                imageToDelete.FileName);
+            return ServiceResult<bool>.ValidationFailure([ImageDeleteFailedMessage]);
+        }
+
+        Product? updatedProduct;
+        try
+        {
+            updatedProduct = await _productRepository.ReplaceImagesAsync(
+                productId,
+                remainingImages,
+                cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            _logger.LogWarning(
+                exception,
+                "Product image metadata delete failed after blob removal for product {ProductId}.",
+                productId);
+            return ServiceResult<bool>.ValidationFailure([
+                "Image metadata could not be updated after blob deletion."
+            ]);
+        }
+
+        if (updatedProduct is null)
+        {
+            return ServiceResult<bool>.NotFound(["Product was not found."]);
+        }
 
         return ServiceResult<bool>.Success(true);
     }
@@ -375,7 +483,9 @@ public sealed class ProductService : IProductService
             .ToList() ?? [];
     }
 
-    private List<string> ValidateImageFile(IFormFile? file)
+    private async Task<List<string>> ValidateImageFileAsync(
+        IFormFile? file,
+        CancellationToken cancellationToken)
     {
         var errors = new List<string>();
 
@@ -397,7 +507,34 @@ public sealed class ProductService : IProductService
             errors.Add("Image file type is not supported.");
         }
 
+        if (errors.Count == 0
+            && !await ImageFileValidator.MatchesContentTypeAsync(
+                file,
+                file.ContentType,
+                cancellationToken))
+        {
+            errors.Add("Image file signature does not match the selected image type.");
+        }
+
         return errors;
+    }
+
+    private async Task TryDeleteStoredImageAsync(
+        string productId,
+        string fileName,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _imageStorageService.DeleteAsync(productId, fileName, cancellationToken);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            _logger.LogWarning(
+                exception,
+                "Compensating product image cleanup failed for product {ProductId}.",
+                productId);
+        }
     }
 
     private static List<ProductImage> NormalizeImages(List<ProductImage>? images)

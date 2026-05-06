@@ -7,7 +7,10 @@ public interface IImageStorageService
         IFormFile file,
         CancellationToken cancellationToken);
 
-    Task DeleteAsync(string fileName, CancellationToken cancellationToken);
+    Task<bool> DeleteAsync(
+        string productId,
+        string fileName,
+        CancellationToken cancellationToken);
 }
 
 public sealed record StoredImageResult(
